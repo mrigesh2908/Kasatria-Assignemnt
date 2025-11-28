@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>3D-ish Periodic Table — CSS 3D</title>
+
+<!-- Google Sign-In -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<style>
+  :root{
+    --tile-w:160px;
+    --tile-h:200px;
+  }
+
+  html,body{
+    height:100%;
+    margin:0;
+    background:#0d0d0d;
+    color:#eee;
+    font-family:Inter,Arial,Helvetica,sans-serif;
+    overflow:hidden;
+  }
+
+  /* UI */
+  #ui{
+    position:fixed;
+    left:12px;
+    top:12px;
+    z-index:50;
+    display:flex;
+    gap:8px;
+    align-items:center;
+    background:rgba(0,0,0,0.6);
+    padding:8px 12px;
+    border-radius:10px;
+    backdrop-filter:blur(6px);
+  }
+  button,select{
+    font-size:14px;
+    padding:6px 10px;
+    border-radius:6px;
+    border:0;
+    background:#222;
+    color:#fff;
+    cursor:pointer;
+  }
+
+  #container{
+    width:100vw;
+    height:100vh;
+    perspective:1600px;
+    position:relative;
+  }
+
+  .stage{
+    width:100%;
+    height:100%;
+    transform-style:preserve-3d;
+    position:absolute;
+    left:0;top:0;
+  }
+
+  .tile{
+    width:var(--tile-w);
+    height:var(--tile-h);
+    position:absolute;
+    left:50%; top:50%;
+    transform-style:preserve-3d;
+    backface-visibility:visible;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 10px 40px rgba(0,0,0,0.55);
+    padding:10px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    font-size:13px;
+    opacity:0;
+    transition:transform 1s cubic-bezier(.2,.7,.2,1), opacity .8s;
+  }
+
+  .tile img{
+    width:100%;
+    height:90px;
+    object-fit:cover;
+    border-radius:6px;
+    margin-bottom:6px;
+  }
+
+  .name{
+    font-weight:700;
+    margin-bottom:4px;
+    text-align:center;
+  }
+
+  .meta{
+    font-size:12px;
+    text-align:center;
+  }
+
+  @media (max-width:900px){
+    :root{
+      --tile-w:130px;
+      --tile-h:170px;
+    }
+  }
+</style>
+</head>
+
+<body>
+<div id="ui">
+  <!-- Google Sign-In Button -->
+  <div id="g_id_onload"
+       data-client_id="699948358244-7q1jjb5i36toidhhivnngpb77so71t1j.apps.googleusercontent.com"
+       data-context="signin"
+       data-ux_mode="popup"
+       data-callback="handleCredentialResponse">
+  </div>
+
+  <div class="g_id_signin" data-type="standard"></div>
+
+  <button id="loadBtn" disabled>Load Data</button>
+
+  <select id="layout">
+    <option value="table">Table</option>
+    <option value="sphere">Sphere</option>
+    <option value="doubleHelix">Double Helix</option>
+    <option value="grid">Grid</option>
+  </select>
+
+  <button id="apply">Apply</button>
+</div>
+
+<div id="container">
+  <div id="stage" class="stage"></div>
+</div>
+
+<script>
+/* ---------------------- GOOGLE LOGIN ---------------------- */
+
+function handleCredentialResponse(response) {
+  const payload = JSON.parse(atob(response.credential.split('.')[1]));
+  console.log("Logged in user:", payload);
+
+  alert(`Hello ${payload.name}! You are now logged in.`);
+
+  // Enable CSV load button after login
+  document.getElementById("loadBtn").disabled = false;
+}
+
+/* ---------------------- CSV ---------------------- */
+
+const CSV_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSpokab2VctDgtMFhlHgI9x6rPrE3gkBN7RsvkmsBeUYUrq8t25y4sVUyJ-XTnfC6q9qznY2mJPHOLY/pub?gid=1348231379&single=true&output=csv";
+
+function parseCSV(text){
+  const rows = [];
+  let cur = "", inQuote = false;
+  const lines = [];
+
+  for(const ch of text){
+    if(ch === '"'){ inQuote = !inQuote; cur+=ch; continue; }
+    if(ch === "\n" && !inQuote){ lines.push(cur); cur=""; continue; }
+    if(ch !== "\r") cur += ch;
+  }
+  if(cur) lines.push(cur);
+
+  for(const line of lines){
+    const out=[], f="", fields=[]; let buf="", q=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c=='"' && line[i+1]=='"'){ buf+='"'; i++; continue; }
+      if(c=='"'){ q=!q; continue; }
+      if(c==',' && !q){ fields.push(buf); buf=""; continue; }
+      buf+=c;
+    }
+    fields.push(buf);
+    rows.push(fields.map(s=>s.trim()));
+  }
+
+  const headers = rows.shift();
+  return rows.map(r=>{
+    const obj={};
+    for(let i=0;i<headers.length;i++) obj[headers[i]]=r[i]||"";
+    return obj;
+  });
+}
+
+function parseNetWorth(str){
+  if(!str) return 0;
+  const clean = str.replace(/[\$,]/g,"").trim();
+  if(/k$/i.test(clean)) return parseFloat(clean)*1000;
+  if(/m$/i.test(clean)) return parseFloat(clean)*1_000_000;
+  return parseFloat(clean) || 0;
+}
+
+function colorForNet(n){
+  if(n<100000) return "#ff6b6b";
+  if(n<=200000) return "#ffb84d";
+  return "#66cc66";
+}
+
+/* ---------------------- MAIN ---------------------- */
+
+let items=[];
+const stage=document.getElementById("stage");
+
+async function loadData(){
+  try{
+    const res = await fetch(CSV_URL);
+    const text = await res.text();
+    const data = parseCSV(text);
+
+    items = data.map(d => ({
+      Name: d["Name"] || d["Full Name"] || "",
+      Photo: d["Photo"] || "",
+      Age: d["Age"] || "",
+      Country: d["Country"] || "",
+      Interest: d["Interest"] || "",
+      NetWorthRaw: d["Net Worth"] || ""
+    }));
+
+    createTiles();
+    alert("Loaded "+items.length+" rows");
+  }catch(err){
+    alert("Error loading CSV");
+    console.error(err);
+  }
+}
+
+function createTiles(){
+  stage.innerHTML="";
+  items.forEach((it,i)=>{
+    const el = document.createElement("div");
+    el.className="tile";
+
+    const img = document.createElement("img");
+    img.src = it.Photo || "";
+    img.onerror = ()=> img.src="https://via.placeholder.com/320x180?text=No+Image";
+
+    const nm = document.createElement("div");
+    nm.className="name";
+    nm.textContent = it.Name;
+
+    const meta = document.createElement("div");
+    meta.className="meta";
+    meta.innerHTML =
+      `Age: ${it.Age}<br>Country: ${it.Country}<br>${it.Interest}<br>${it.NetWorthRaw}`;
+
+    el.appendChild(img);
+    el.appendChild(nm);
+    el.appendChild(meta);
+
+    const net = parseNetWorth(it.NetWorthRaw);
+    el.style.background = colorForNet(net);
+
+    el.style.transform =
+      `translate3d(${(Math.random()-0.5)*1200}px,
+                   ${(Math.random()-0.5)*900}px,
+                   ${(Math.random()-0.5)*1800}px)
+       translate(-50%,-50%)`;
+
+    stage.appendChild(el);
+    items[i].el = el;
+
+    setTimeout(()=> el.style.opacity=1, 20 + (i%20)*15);
+  });
+}
+
+/* ---------------------- LAYOUTS ---------------------- */
+
+function transform(el,x,y,z,rx=0,ry=0){
+  el.style.transform =
+    `translate3d(${x}px,${y}px,${z}px)
+     translate(-50%,-50%)
+     rotateX(${rx}deg)
+     rotateY(${ry}deg)`;
+}
+
+function layoutTable(){
+  const cols=20, rows=10;
+  const sepX=220, sepY=260; // bigger spacing
+  const offX=(cols-1)*sepX/2, offY=(rows-1)*sepY/2;
+
+  items.forEach((it,i)=>{
+    const c=i%cols, r=(i/cols)|0;
+    transform(it.el, c*sepX-offX, r*sepY-offY, 0);
+  });
+}
+
+function layoutSphere(){
+  const N = items.length;
+  const R = Math.min(innerWidth,innerHeight)*0.45; // slightly bigger radius
+
+  for(let i=0;i<N;i++){
+    const phi = Math.acos(-1 + (2*i)/N);
+    const theta = Math.sqrt(N*Math.PI)*phi;
+    transform(
+      items[i].el,
+      R*Math.cos(theta)*Math.sin(phi),
+      R*Math.sin(theta)*Math.sin(phi),
+      R*Math.cos(phi)
+    );
+  }
+}
+
+function layoutDoubleHelix(){
+  const R = 280; // radius of strands
+  const spacing = 50; // vertical spacing
+  const angleStep = 0.3; // rotation step
+
+  items.forEach((it,i)=>{
+    const strand = i % 2; // 0 or 1
+    const a = i * angleStep;
+    const offsetAngle = strand === 0 ? 0 : Math.PI; // 180° for second strand
+    const x = Math.cos(a + offsetAngle) * R;
+    const z = Math.sin(a + offsetAngle) * R;
+    const y = i * spacing / 2 - items.length * spacing / 4; // center vertically
+    transform(it.el, x, y, z, 0, (a + offsetAngle)*40);
+  });
+}
+
+function layoutGrid(){
+  const nx=5, ny=4, nz=10;
+  const sep=320; // more spacing
+  let i=0;
+
+  for(let x=0;x<nx;x++){
+    for(let y=0;y<ny;y++){
+      for(let z=0;z<nz;z++){
+        if(i>=items.length) return;
+        transform(
+          items[i].el,
+          x*sep - (nx-1)*sep/2,
+          y*sep - (ny-1)*sep/2,
+          z*sep - (nz-1)*sep/2
+        );
+        i++;
+      }
+    }
+  }
+}
+
+/* ---------------------- APPLY ---------------------- */
+
+function setLayout(type){
+  if(type==="table") layoutTable();
+  else if(type==="sphere") layoutSphere();
+  else if(type==="doubleHelix") layoutDoubleHelix();
+  else if(type==="grid") layoutGrid();
+}
+
+/* ---------------------- ORBIT CONTROL ---------------------- */
+
+let down=false, lx=0, ly=0, rx=0, ry=0;
+
+container.addEventListener("pointerdown", e=>{
+  down=true; lx=e.clientX; ly=e.clientY;
+});
+container.addEventListener("pointerup", ()=> down=false);
+
+container.addEventListener("pointermove", e=>{
+  if(!down) return;
+  const dx=e.clientX-lx, dy=e.clientY-ly;
+  ry+=dx*0.2; rx-=dy*0.2;
+  stage.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+  lx=e.clientX; ly=e.clientY;
+});
+
+/* ---------------------- BUTTONS ---------------------- */
+
+document.getElementById("loadBtn").onclick = loadData;
+
+document.getElementById("apply").onclick = () => {
+  const v = document.getElementById("layout").value;
+  if(!items.length){ alert("Load data first"); return; }
+  setLayout(v);
+};
+</script>
+</body>
+</html>
