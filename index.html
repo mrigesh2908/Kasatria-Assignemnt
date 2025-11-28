@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>3D-ish Periodic Table — CSS 3D</title>
 
-<!-- Google Sign-In -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
@@ -138,7 +137,8 @@
 </div>
 
 <script>
-/* ---------------------- GOOGLE LOGIN ---------------------- */
+  
+/*Google Login*/
 
 function handleCredentialResponse(response) {
   const payload = JSON.parse(atob(response.credential.split('.')[1]));
@@ -150,7 +150,7 @@ function handleCredentialResponse(response) {
   document.getElementById("loadBtn").disabled = false;
 }
 
-/* ---------------------- CSV ---------------------- */
+/*CSV*/
 
 const CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vSpokab2VctDgtMFhlHgI9x6rPrE3gkBN7RsvkmsBeUYUrq8t25y4sVUyJ-XTnfC6q9qznY2mJPHOLY/pub?gid=1348231379&single=true&output=csv";
@@ -202,7 +202,7 @@ function colorForNet(n){
   return "#66cc66";
 }
 
-/* ---------------------- MAIN ---------------------- */
+/*Main*/
 
 let items=[];
 const stage=document.getElementById("stage");
@@ -269,7 +269,7 @@ function createTiles(){
   });
 }
 
-/* ---------------------- LAYOUTS ---------------------- */
+/*Layout*/
 
 function transform(el,x,y,z,rx=0,ry=0){
   el.style.transform =
@@ -281,7 +281,7 @@ function transform(el,x,y,z,rx=0,ry=0){
 
 function layoutTable(){
   const cols=20, rows=10;
-  const sepX=220, sepY=260; // bigger spacing
+  const sepX=220, sepY=260;
   const offX=(cols-1)*sepX/2, offY=(rows-1)*sepY/2;
 
   items.forEach((it,i)=>{
@@ -292,7 +292,7 @@ function layoutTable(){
 
 function layoutSphere(){
   const N = items.length;
-  const R = Math.min(innerWidth,innerHeight)*0.45; // slightly bigger radius
+  const R = Math.min(innerWidth,innerHeight)*0.45;
 
   for(let i=0;i<N;i++){
     const phi = Math.acos(-1 + (2*i)/N);
@@ -307,24 +307,24 @@ function layoutSphere(){
 }
 
 function layoutDoubleHelix(){
-  const R = 280; // radius of strands
-  const spacing = 50; // vertical spacing
-  const angleStep = 0.3; // rotation step
+  const R = 280;
+  const spacing = 50;
+  const angleStep = 0.3;
 
   items.forEach((it,i)=>{
     const strand = i % 2; // 0 or 1
     const a = i * angleStep;
-    const offsetAngle = strand === 0 ? 0 : Math.PI; // 180° for second strand
+    const offsetAngle = strand === 0 ? 0 : Math.PI;
     const x = Math.cos(a + offsetAngle) * R;
     const z = Math.sin(a + offsetAngle) * R;
-    const y = i * spacing / 2 - items.length * spacing / 4; // center vertically
+    const y = i * spacing / 2 - items.length * spacing / 4;
     transform(it.el, x, y, z, 0, (a + offsetAngle)*40);
   });
 }
 
 function layoutGrid(){
   const nx=5, ny=4, nz=10;
-  const sep=320; // more spacing
+  const sep=320;
   let i=0;
 
   for(let x=0;x<nx;x++){
@@ -343,16 +343,12 @@ function layoutGrid(){
   }
 }
 
-/* ---------------------- APPLY ---------------------- */
-
 function setLayout(type){
   if(type==="table") layoutTable();
   else if(type==="sphere") layoutSphere();
   else if(type==="doubleHelix") layoutDoubleHelix();
   else if(type==="grid") layoutGrid();
 }
-
-/* ---------------------- ORBIT CONTROL ---------------------- */
 
 let down=false, lx=0, ly=0, rx=0, ry=0;
 
@@ -369,7 +365,7 @@ container.addEventListener("pointermove", e=>{
   lx=e.clientX; ly=e.clientY;
 });
 
-/* ---------------------- BUTTONS ---------------------- */
+/*Button*/
 
 document.getElementById("loadBtn").onclick = loadData;
 
