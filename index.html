@@ -140,6 +140,7 @@ button,select{
 // Read CSS variable for spacing calculation
 const style = getComputedStyle(document.documentElement);
 const var_tile_w = parseFloat(style.getPropertyValue('--tile-w').replace('px', ''));
+const var_tile_h = parseFloat(style.getPropertyValue('--tile-h').replace('px', ''));
 
 
 /*Google Login*/
@@ -346,24 +347,31 @@ function layoutGrid(){
   }
 }
 
-// NEW FUNCTION: layoutTetrahedron (Adjusted for Visual Cohesion)
+// NEW FUNCTION: layoutTetrahedron (Simplified for clear 4-sided pyramid)
 function layoutTetrahedron(){
   const N = items.length;
-  // Reduced R to make faces converge better
-  const R = 400; 
+  // Reduced R further to ensure tight convergence at the top
+  const R = 300; 
   const tilesPerFace = Math.ceil(N / 4);
+  const totalRows = tilesPerFace; // Treat the tiles as a single vertical stack per face
+  const sep = var_tile_h * 1.05; // Spacing based on tile height
 
-  // Correct rotations for a tetrahedron centered at (0,0,0).
-  // These angles point the front of the tile outward from the center.
+  // Correct geometric rotations for the 4 faces of a pyramid (3 sides + 1 base)
+  // We use a base rotation of 70 degrees (close to the dihedral angle) to tilt the faces inward.
+  const tiltAngle = 70; 
+
+  // Note: We are using a 4-sided pyramid with a square base (like the Great Pyramid of Giza) 
+  // as the visual structure, which has 4 sides and 1 base, totaling 5 faces, 
+  // but CSS 3D typically only allows manipulating the tiles on the 4 visible "sides" from the center.
   const faceSetup = [
       // Face 1: Front
-      { rotX: -40, rotY: 0, transZ: 0.35 * R }, 
-      // Face 2: Back-left
-      { rotX: -40, rotY: 120, transZ: 0.35 * R }, 
-      // Face 3: Back-right
-      { rotX: -40, rotY: -120, transZ: 0.35 * R }, 
-      // Face 4: Bottom 
-      { rotX: 90, rotY: 0, transZ: -0.15 * R } // Slight lift/drop for the base
+      { rotX: -tiltAngle, rotY: 0, transZ: 0.35 * R }, 
+      // Face 2: Left
+      { rotX: -tiltAngle, rotY: 90, transZ: 0.35 * R }, 
+      // Face 3: Back
+      { rotX: -tiltAngle, rotY: 180, transZ: 0.35 * R }, 
+      // Face 4: Right
+      { rotX: -tiltAngle, rotY: 270, transZ: 0.35 * R }
   ];
 
   for(let i = 0; i < N; i++){
@@ -371,20 +379,14 @@ function layoutTetrahedron(){
     const tileInFaceIndex = i % tilesPerFace;
     const setup = faceSetup[faceIndex];
 
-    // Simple grid layout on the plane of the face
-    const rows = Math.ceil(Math.sqrt(tilesPerFace));
-    const cols = rows;
-    const row = Math.floor(tileInFaceIndex / cols);
-    const col = tileInFaceIndex % cols;
-    
-    // Increased contraction by using a smaller separator distance (1.2 * tile width)
-    const sep = var_tile_w * 1.2;
-    const x_local = col * sep - (cols - 1) * sep / 2;
-    const y_local = row * sep - (rows - 1) * sep / 2;
+    // Place tiles vertically, one above the other, in the center of the face
+    // This creates a tall rectangular face that, when tilted, forms a pyramid shape.
+    // The top tiles will be cut off by the camera view, simulating a tip.
+    const y_local = (tileInFaceIndex * sep) - (totalRows * sep / 2);
     
     transform(
       items[i].el,
-      x_local, 
+      0, // x_local centered on the face
       y_local, 
       setup.transZ,
       setup.rotX, 
