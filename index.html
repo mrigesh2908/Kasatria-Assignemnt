@@ -125,9 +125,8 @@
     <option value="sphere">Sphere</option>
     <option value="doubleHelix">Double Helix</option>
     <option value="grid">Grid</option>
-
-    <!-- ✅ NEW OPTION ADDED -->
-    <option value="pyramid">4-Face Pyramid</option>
+    <!-- ✅ ADDED PYRAMID OPTION -->
+    <option value="pyramid">Pyramid</option>
   </select>
 
   <button id="apply">Apply</button>
@@ -138,6 +137,7 @@
 </div>
 
 <script>
+
 
 /*Google Login*/
 
@@ -343,39 +343,28 @@ function layoutGrid(){
   }
 }
 
-/* ✅ NEW: Pyramid Layout */
-function layoutPyramid() {
-  const N = items.length;
-  const size = 500;
-
-  const verts = [
-    [0,  size, 0],
-    [ size, -size,  size],
-    [-size, -size,  size],
-    [0, -size, -size]
+/* ✅ NEW — 4-FACE PYRAMID (TETRAHEDRON) */
+function layoutPyramid(){
+  const top = { x:0, y:-300, z:0 };
+  const base = [
+    { x: 250, y:200, z: 250 },
+    { x:-250, y:200, z: 250 },
+    { x:   0, y:200, z:-250 }
   ];
 
-  let i = 0;
+  const perFace = Math.ceil(items.length / 3);
+  let index = 0;
 
-  for (let face = 0; face < 4; face++) {
-    const A = verts[face];
-    const B = verts[(face + 1) % 4];
-    const C = verts[(face + 2) % 4];
+  for(let f=0; f<3; f++){
+    const A = top;
+    const B = base[f];
 
-    for (let step = 0; step < 20; step++) {
-      if (i >= N) return;
-
-      const t1 = Math.random();
-      const t2 = Math.random();
-      const t3 = Math.random();
-      const sum = t1+t2+t3;
-
-      const px = (t1/sum)*A[0] + (t2/sum)*B[0] + (t3/sum)*C[0];
-      const py = (t1/sum)*A[1] + (t2/sum)*B[1] + (t3/sum)*C[1];
-      const pz = (t1/sum)*A[2] + (t2/sum)*B[2] + (t3/sum)*C[2];
-
-      transform(items[i].el, px, py, pz);
-      i++;
+    for(let i=0; i<perFace && index < items.length; i++, index++){
+      const t = i / perFace;
+      const x = A.x + (B.x - A.x) * t;
+      const y = A.y + (B.y - A.y) * t;
+      const z = A.z + (B.z - A.z) * t;
+      transform(items[index].el, x, y, z);
     }
   }
 }
@@ -385,10 +374,9 @@ function setLayout(type){
   else if(type==="sphere") layoutSphere();
   else if(type==="doubleHelix") layoutDoubleHelix();
   else if(type==="grid") layoutGrid();
-
-  /* ✅ NEW */
-  else if(type==="pyramid") layoutPyramid();
+  else if(type==="pyramid") layoutPyramid();   /* ✅ added */
 }
+
 
 /*Control*/
 let down=false, lx=0, ly=0, rx=0, ry=0;
@@ -405,6 +393,7 @@ container.addEventListener("pointermove", e=>{
   stage.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
   lx=e.clientX; ly=e.clientY;
 });
+
 
 /*Button*/
 document.getElementById("loadBtn").onclick = loadData;
