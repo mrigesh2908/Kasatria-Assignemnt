@@ -346,22 +346,24 @@ function layoutGrid(){
   }
 }
 
-// NEW FUNCTION: layoutTetrahedron (True 4-Face Geometry)
+// NEW FUNCTION: layoutTetrahedron (Adjusted for Visual Cohesion)
 function layoutTetrahedron(){
   const N = items.length;
-  const R = 600; // Scaling factor (size of the tetrahedron)
+  // Reduced R to make faces converge better
+  const R = 400; 
   const tilesPerFace = Math.ceil(N / 4);
 
-  // Define the rotation and translation for each of the four triangular faces
+  // Correct rotations for a tetrahedron centered at (0,0,0).
+  // These angles point the front of the tile outward from the center.
   const faceSetup = [
-      // Face 1: Front-leaning
-      { rotX: -45, rotY: 0, transZ: 0.5 * R }, 
-      // Face 2: Back-left leaning
-      { rotX: -45, rotY: 120, transZ: 0.5 * R }, 
-      // Face 3: Back-right leaning
-      { rotX: -45, rotY: -120, transZ: 0.5 * R }, 
-      // Face 4: Bottom base
-      { rotX: 90, rotY: 0, transZ: 0.2 * R }
+      // Face 1: Front
+      { rotX: -40, rotY: 0, transZ: 0.35 * R }, 
+      // Face 2: Back-left
+      { rotX: -40, rotY: 120, transZ: 0.35 * R }, 
+      // Face 3: Back-right
+      { rotX: -40, rotY: -120, transZ: 0.35 * R }, 
+      // Face 4: Bottom 
+      { rotX: 90, rotY: 0, transZ: -0.15 * R } // Slight lift/drop for the base
   ];
 
   for(let i = 0; i < N; i++){
@@ -375,7 +377,8 @@ function layoutTetrahedron(){
     const row = Math.floor(tileInFaceIndex / cols);
     const col = tileInFaceIndex % cols;
     
-    const sep = var_tile_w * 1.5;
+    // Increased contraction by using a smaller separator distance (1.2 * tile width)
+    const sep = var_tile_w * 1.2;
     const x_local = col * sep - (cols - 1) * sep / 2;
     const y_local = row * sep - (rows - 1) * sep / 2;
     
