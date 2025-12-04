@@ -346,55 +346,46 @@ function layoutGrid(){
   }
 }
 
-// NEW FUNCTION: layoutTetrahedron (True 4-Face Pyramid)
+// NEW FUNCTION: layoutTetrahedron (True 4-Face Geometry)
 function layoutTetrahedron(){
   const N = items.length;
-  const R = 450; // Radius / Scale for the tetrahedron
+  const R = 600; // Scaling factor (size of the tetrahedron)
   const tilesPerFace = Math.ceil(N / 4);
 
-  // Rotation (rx, ry) and Translation (tz) needed to position a tile on a face 
-  // and have that face point towards the camera from the center.
-  // Note: 109.5 degrees is the dihedral angle (the angle between two faces)
-  const T = 109.5; // Tetrahedron dihedral angle
-  const faces = [
-    // Face 1: Tilted forward/down
-    { ry: 0, rx: -90 + T/2, tz: R * 0.4 }, 
-    // Face 2: Tilted up/left
-    { ry: 120, rx: -90 + T/2, tz: R * 0.4 }, 
-    // Face 3: Tilted up/right
-    { ry: -120, rx: -90 + T/2, tz: R * 0.4 },
-    // Face 4 (Base): Tilted straight down/back
-    { ry: 0, rx: 90 - T/2, tz: -R * 0.4 } 
+  // Define the rotation and translation for each of the four triangular faces
+  const faceSetup = [
+      // Face 1: Front-leaning
+      { rotX: -45, rotY: 0, transZ: 0.5 * R }, 
+      // Face 2: Back-left leaning
+      { rotX: -45, rotY: 120, transZ: 0.5 * R }, 
+      // Face 3: Back-right leaning
+      { rotX: -45, rotY: -120, transZ: 0.5 * R }, 
+      // Face 4: Bottom base
+      { rotX: 90, rotY: 0, transZ: 0.2 * R }
   ];
 
   for(let i = 0; i < N; i++){
     const faceIndex = Math.floor(i / tilesPerFace) % 4;
     const tileInFaceIndex = i % tilesPerFace;
-    const face = faces[faceIndex];
+    const setup = faceSetup[faceIndex];
 
-    // Normalized distance from the start of the face's tile group (t=0) to the end (t=1)
-    const t = (tileInFaceIndex / tilesPerFace) * 2 - 1; // Range -1 to 1
-
-    // Simple horizontal (x) and vertical (y) placement within the rotated face
+    // Simple grid layout on the plane of the face
     const rows = Math.ceil(Math.sqrt(tilesPerFace));
     const cols = rows;
     const row = Math.floor(tileInFaceIndex / cols);
     const col = tileInFaceIndex % cols;
-
-    const sep = 1.8 * (var_tile_w / 2); // Spacing based on tile width
     
-    // Position the tiles in a grid on their face plane
-    const x = col * sep - (cols - 1) * sep / 2;
-    const y = row * sep - (rows - 1) * sep / 2;
+    const sep = var_tile_w * 1.5;
+    const x_local = col * sep - (cols - 1) * sep / 2;
+    const y_local = row * sep - (rows - 1) * sep / 2;
     
-    // Use the stored rotation and Z-translation for the chosen face
     transform(
       items[i].el,
-      x, // X position on the face plane
-      y, // Y position on the face plane
-      face.tz, // Z translation (depth) relative to the center
-      face.rx, // Rotation around X (pitch)
-      face.ry  // Rotation around Y (yaw)
+      x_local, 
+      y_local, 
+      setup.transZ,
+      setup.rotX, 
+      setup.rotY
     );
   }
 }
