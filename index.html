@@ -8,132 +8,131 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
-  :root{
-    --tile-w:160px;
-    --tile-h:200px;
-  }
+  :root{
+    --tile-w:160px;
+    --tile-h:200px;
+  }
 
-  html,body{
-    height:100%;
-    margin:0;
-    background:#0d0d0d;
-    color:#eee;
-    font-family:Inter,Arial,Helvetica,sans-serif;
-    overflow:hidden;
-  }
+  html,body{
+    height:100%;
+    margin:0;
+    background:#0d0d0d;
+    color:#eee;
+    font-family:Inter,Arial,Helvetica,sans-serif;
+    overflow:hidden;
+  }
 
-  #ui{
-    position:fixed;
-    left:12px;
-    top:12px;
-    z-index:50;
-    display:flex;
-    gap:8px;
-    align-items:center;
-    background:rgba(0,0,0,0.6);
-    padding:8px 12px;
-    border-radius:10px;
-    backdrop-filter:blur(6px);
-  }
-  button,select{
-    font-size:14px;
-    padding:6px 10px;
-    border-radius:6px;
-    border:0;
-    background:#222;
-    color:#fff;
-    cursor:pointer;
-  }
+  #ui{
+    position:fixed;
+    left:12px;
+    top:12px;
+    z-index:50;
+    display:flex;
+    gap:8px;
+    align-items:center;
+    background:rgba(0,0,0,0.6);
+    padding:8px 12px;
+    border-radius:10px;
+    backdrop-filter:blur(6px);
+  }
+  button,select{
+    font-size:14px;
+    padding:6px 10px;
+    border-radius:6px;
+    border:0;
+    background:#222;
+    color:#fff;
+    cursor:pointer;
+  }
 
-  #container{
-    width:100vw;
-    height:100vh;
-    perspective:1600px;
-    position:relative;
-  }
+  #container{
+    width:100vw;
+    height:100vh;
+    perspective:1600px;
+    position:relative;
+  }
 
-  .stage{
-    width:100%;
-    height:100%;
-    transform-style:preserve-3d;
-    position:absolute;
-    left:0;top:0;
-  }
+  .stage{
+    width:100%;
+    height:100%;
+    transform-style:preserve-3d;
+    position:absolute;
+    left:0;top:0;
+  }
 
-  .tile{
-    width:var(--tile-w);
-    height:var(--tile-h);
-    position:absolute;
-    left:50%; top:50%;
-    transform-style:preserve-3d;
-    backface-visibility:visible;
-    border-radius:12px;
-    overflow:hidden;
-    box-shadow:0 10px 40px rgba(0,0,0,0.55);
-    padding:10px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    font-size:13px;
-    opacity:0;
-    transition:transform 1s cubic-bezier(.2,.7,.2,1), opacity .8s;
-  }
+  .tile{
+    width:var(--tile-w);
+    height:var(--tile-h);
+    position:absolute;
+    left:50%; top:50%;
+    transform-style:preserve-3d;
+    backface-visibility:visible;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 10px 40px rgba(0,0,0,0.55);
+    padding:10px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    font-size:13px;
+    opacity:0;
+    transition:transform 1s cubic-bezier(.2,.7,.2,1), opacity .8s;
+  }
 
-  .tile img{
-    width:100%;
-    height:90px;
-    object-fit:cover;
-    border-radius:6px;
-    margin-bottom:6px;
-  }
+  .tile img{
+    width:100%;
+    height:90px;
+    object-fit:cover;
+    border-radius:6px;
+    margin-bottom:6px;
+  }
 
-  .name{
-    font-weight:700;
-    margin-bottom:4px;
-    text-align:center;
-  }
+  .name{
+    font-weight:700;
+    margin-bottom:4px;
+    text-align:center;
+  }
 
-  .meta{
-    font-size:12px;
-    text-align:center;
-  }
+  .meta{
+    font-size:12px;
+    text-align:center;
+  }
 
-  @media (max-width:900px){
-    :root{
-      --tile-w:130px;
-      --tile-h:170px;
-    }
-  }
+  @media (max-width:900px){
+    :root{
+      --tile-w:130px;
+      --tile-h:170px;
+    }
+  }
 </style>
 </head>
 
 <body>
 <div id="ui">
-  <div id="g_id_onload"
-       data-client_id="699948358244-7q1jjb5i36toidhhivnngpb77so71t1j.apps.googleusercontent.com"
-       data-context="signin"
-       data-ux_mode="popup"
-       data-callback="handleCredentialResponse">
-  </div>
+  <div id="g_id_onload"
+       data-client_id="699948358244-7q1jjb5i36toidhhivnngpb77so71t1j.apps.googleusercontent.com"
+       data-context="signin"
+       data-ux_mode="popup"
+       data-callback="handleCredentialResponse">
+  </div>
 
-  <div class="g_id_signin" data-type="standard"></div>
+  <div class="g_id_signin" data-type="standard"></div>
 
-  <button id="loadBtn" disabled>Load Data</button>
+  <button id="loadBtn" disabled>Load Data</button>
 
-  <select id="layout">
-    <option value="table">Table</option>
-    <option value="sphere">Sphere</option>
-    <option value="doubleHelix">Double Helix</option>
-    <option value="grid">Grid</option>
-    <!-- ✅ ADDED PYRAMID OPTION -->
-    <option value="pyramid">Pyramid</option>
-  </select>
+  <select id="layout">
+    <option value="table">Table</option>
+    <option value="sphere">Sphere</option>
+    <option value="doubleHelix">Double Helix</option>
+    <option value="grid">Grid</option>
+    <option value="tetrahedron">Tetrahedron (4-Face Pyramid)</option>
+  </select>
 
-  <button id="apply">Apply</button>
+  <button id="apply">Apply</button>
 </div>
 
 <div id="container">
-  <div id="stage" class="stage"></div>
+  <div id="stage" class="stage"></div>
 </div>
 
 <script>
@@ -142,64 +141,64 @@
 /*Google Login*/
 
 function handleCredentialResponse(response) {
-  const payload = JSON.parse(atob(response.credential.split('.')[1]));
-  console.log("Logged in user:", payload);
+  const payload = JSON.parse(atob(response.credential.split('.')[1]));
+  console.log("Logged in user:", payload);
 
-  alert(`Hello ${payload.name}! You are now logged in.`);
+  alert(`Hello ${payload.name}! You are now logged in.`);
 
-  document.getElementById("loadBtn").disabled = false;
+  document.getElementById("loadBtn").disabled = false;
 }
 
 /* CSV*/
 
 const CSV_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSpokab2VctDgtMFhlHgI9x6rPrE3gkBN7RsvkmsBeUYUrq8t25y4sVUyJ-XTnfC6q9qznY2mJPHOLY/pub?gid=1348231379&single=true&output=csv";
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSpokab2VctDgtMFhlHgI9x6rPrE3gkBN7RsvkmsBeUYUrq8t25y4sVUyJ-XTnfC6q9qznY2mJPHOLY/pub?gid=1348231379&single=true&output=csv";
 
 function parseCSV(text){
-  const rows = [];
-  let cur = "", inQuote = false;
-  const lines = [];
+  const rows = [];
+  let cur = "", inQuote = false;
+  const lines = [];
 
-  for(const ch of text){
-    if(ch === '"'){ inQuote = !inQuote; cur+=ch; continue; }
-    if(ch === "\n" && !inQuote){ lines.push(cur); cur=""; continue; }
-    if(ch !== "\r") cur += ch;
-  }
-  if(cur) lines.push(cur);
+  for(const ch of text){
+    if(ch === '"'){ inQuote = !inQuote; cur+=ch; continue; }
+    if(ch === "\n" && !inQuote){ lines.push(cur); cur=""; continue; }
+    if(ch !== "\r") cur += ch;
+  }
+  if(cur) lines.push(cur);
 
-  for(const line of lines){
-    const out=[], f="", fields=[]; let buf="", q=false;
-    for(let i=0;i<line.length;i++){
-      const c=line[i];
-      if(c=='"' && line[i+1]=='"'){ buf+='"'; i++; continue; }
-      if(c=='"'){ q=!q; continue; }
-      if(c==',' && !q){ fields.push(buf); buf=""; continue; }
-      buf+=c;
-    }
-    fields.push(buf);
-    rows.push(fields.map(s=>s.trim()));
-  }
+  for(const line of lines){
+    const out=[], f="", fields=[]; let buf="", q=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c=='"' && line[i+1]=='"'){ buf+='"'; i++; continue; }
+      if(c=='"'){ q=!q; continue; }
+      if(c==',' && !q){ fields.push(buf); buf=""; continue; }
+      buf+=c;
+    }
+    fields.push(buf);
+    rows.push(fields.map(s=>s.trim()));
+  }
 
-  const headers = rows.shift();
-  return rows.map(r=>{
-    const obj={};
-    for(let i=0;i<headers.length;i++) obj[headers[i]]=r[i]||"";
-    return obj;
-  });
+  const headers = rows.shift();
+  return rows.map(r=>{
+    const obj={};
+    for(let i=0;i<headers.length;i++) obj[headers[i]]=r[i]||"";
+    return obj;
+  });
 }
 
 function parseNetWorth(str){
-  if(!str) return 0;
-  const clean = str.replace(/[\$,]/g,"").trim();
-  if(/k$/i.test(clean)) return parseFloat(clean)*1000;
-  if(/m$/i.test(clean)) return parseFloat(clean)*1_000_000;
-  return parseFloat(clean) || 0;
+  if(!str) return 0;
+  const clean = str.replace(/[\$,]/g,"").trim();
+  if(/k$/i.test(clean)) return parseFloat(clean)*1000;
+  if(/m$/i.test(clean)) return parseFloat(clean)*1_000_000;
+  return parseFloat(clean) || 0;
 }
 
 function colorForNet(n){
-  if(n<100000) return "#ff6b6b";
-  if(n<=200000) return "#ffb84d";
-  return "#66cc66";
+  if(n<100000) return "#ff6b6b";
+  if(n<=200000) return "#ffb84d";
+  return "#66cc66";
 }
 
 /*Main*/
@@ -208,173 +207,186 @@ let items=[];
 const stage=document.getElementById("stage");
 
 async function loadData(){
-  try{
-    const res = await fetch(CSV_URL);
-    const text = await res.text();
-    const data = parseCSV(text);
+  try{
+    const res = await fetch(CSV_URL);
+    const text = await res.text();
+    const data = parseCSV(text);
 
-    items = data.map(d => ({
-      Name: d["Name"] || d["Full Name"] || "",
-      Photo: d["Photo"] || "",
-      Age: d["Age"] || "",
-      Country: d["Country"] || "",
-      Interest: d["Interest"] || "",
-      NetWorthRaw: d["Net Worth"] || ""
-    }));
+    items = data.map(d => ({
+      Name: d["Name"] || d["Full Name"] || "",
+      Photo: d["Photo"] || "",
+      Age: d["Age"] || "",
+      Country: d["Country"] || "",
+      Interest: d["Interest"] || "",
+      NetWorthRaw: d["Net Worth"] || ""
+    }));
 
-    createTiles();
-    alert("Loaded "+items.length+" rows");
-  }catch(err){
-    alert("Error loading CSV");
-    console.error(err);
-  }
+    createTiles();
+    alert("Loaded "+items.length+" rows");
+  }catch(err){
+    alert("Error loading CSV");
+    console.error(err);
+  }
 }
 
 function createTiles(){
-  stage.innerHTML="";
-  items.forEach((it,i)=>{
-    const el = document.createElement("div");
-    el.className="tile";
+  stage.innerHTML="";
+  items.forEach((it,i)=>{
+    const el = document.createElement("div");
+    el.className="tile";
 
-    const img = document.createElement("img");
-    img.src = it.Photo || "";
-    img.onerror = ()=> img.src="https://via.placeholder.com/320x180?text=No+Image";
+    const img = document.createElement("img");
+    img.src = it.Photo || "";
+    img.onerror = ()=> img.src="https://via.placeholder.com/320x180?text=No+Image";
 
-    const nm = document.createElement("div");
-    nm.className="name";
-    nm.textContent = it.Name;
+    const nm = document.createElement("div");
+    nm.className="name";
+    nm.textContent = it.Name;
 
-    const meta = document.createElement("div");
-    meta.className="meta";
-    meta.innerHTML =
-      `Age: ${it.Age}<br>Country: ${it.Country}<br>${it.Interest}<br>${it.NetWorthRaw}`;
+    const meta = document.createElement("div");
+    meta.className="meta";
+    meta.innerHTML =
+      `Age: ${it.Age}<br>Country: ${it.Country}<br>${it.Interest}<br>${it.NetWorthRaw}`;
 
-    el.appendChild(img);
-    el.appendChild(nm);
-    el.appendChild(meta);
+    el.appendChild(img);
+    el.appendChild(nm);
+    el.appendChild(meta);
 
-    const net = parseNetWorth(it.NetWorthRaw);
-    el.style.background = colorForNet(net);
+    const net = parseNetWorth(it.NetWorthRaw);
+    el.style.background = colorForNet(net);
 
-    el.style.transform =
-      `translate3d(${(Math.random()-0.5)*1200}px,
-                   ${(Math.random()-0.5)*900}px,
-                   ${(Math.random()-0.5)*1800}px)
-       translate(-50%,-50%)`;
+    el.style.transform =
+      `translate3d(${(Math.random()-0.5)*1200}px,
+                   ${(Math.random()-0.5)*900}px,
+                   ${(Math.random()-0.5)*1800}px)
+       translate(-50%,-50%)`;
 
-    stage.appendChild(el);
-    items[i].el = el;
+    stage.appendChild(el);
+    items[i].el = el;
 
-    setTimeout(()=> el.style.opacity=1, 20 + (i%20)*15);
-  });
+    setTimeout(()=> el.style.opacity=1, 20 + (i%20)*15);
+  });
 }
 
 /*Layout*/
 
 function transform(el,x,y,z,rx=0,ry=0){
-  el.style.transform =
-    `translate3d(${x}px,${y}px,${z}px)
-     translate(-50%,-50%)
-     rotateX(${rx}deg)
-     rotateY(${ry}deg)`;
+  el.style.transform =
+    `translate3d(${x}px,${y}px,${z}px)
+     translate(-50%,-50%)
+     rotateX(${rx}deg)
+     rotateY(${ry}deg)`;
 }
 
 function layoutTable(){
-  const cols=20, rows=10;
-  const sepX=220, sepY=260;
-  const offX=(cols-1)*sepX/2, offY=(rows-1)*sepY/2;
+  const cols=20, rows=10;
+  const sepX=220, sepY=260;
+  const offX=(cols-1)*sepX/2, offY=(rows-1)*sepY/2;
 
-  items.forEach((it,i)=>{
-    const c=i%cols, r=(i/cols)|0;
-    transform(it.el, c*sepX-offX, r*sepY-offY, 0);
-  });
+  items.forEach((it,i)=>{
+    const c=i%cols, r=(i/cols)|0;
+    transform(it.el, c*sepX-offX, r*sepY-offY, 0);
+  });
 }
 
 function layoutSphere(){
-  const N = items.length;
-  const R = Math.min(innerWidth,innerHeight)*0.45;
+  const N = items.length;
+  const R = Math.min(innerWidth,innerHeight)*0.45;
 
-  for(let i=0;i<N;i++){
-    const phi = Math.acos(-1 + (2*i)/N);
-    const theta = Math.sqrt(N*Math.PI)*phi;
-    transform(
-      items[i].el,
-      R*Math.cos(theta)*Math.sin(phi),
-      R*Math.sin(theta)*Math.sin(phi),
-      R*Math.cos(phi)
-    );
-  }
+  for(let i=0;i<N;i++){
+    const phi = Math.acos(-1 + (2*i)/N);
+    const theta = Math.sqrt(N*Math.PI)*phi;
+    transform(
+      items[i].el,
+      R*Math.cos(theta)*Math.sin(phi),
+      R*Math.sin(theta)*Math.sin(phi),
+      R*Math.cos(phi)
+    );
+  }
 }
 
 function layoutDoubleHelix(){
-  const R = 280;
-  const spacing = 50;
-  const angleStep = 0.3;
+  const R = 280;
+  const spacing = 50;
+  const angleStep = 0.3;
 
-  items.forEach((it,i)=>{
-    const strand = i % 2;
-    const a = i * angleStep;
-    const offsetAngle = strand === 0 ? 0 : Math.PI;
-    const x = Math.cos(a + offsetAngle) * R;
-    const z = Math.sin(a + offsetAngle) * R;
-    const y = i * spacing / 2 - items.length * spacing / 4;
-    transform(it.el, x, y, z, 0, (a + offsetAngle)*40);
-  });
+  items.forEach((it,i)=>{
+    const strand = i % 2;
+    const a = i * angleStep;
+    const offsetAngle = strand === 0 ? 0 : Math.PI;
+    const x = Math.cos(a + offsetAngle) * R;
+    const z = Math.sin(a + offsetAngle) * R;
+    const y = i * spacing / 2 - items.length * spacing / 4;
+    transform(it.el, x, y, z, 0, (a + offsetAngle)*40);
+  });
 }
 
 function layoutGrid(){
-  const nx=5, ny=4, nz=10;
-  const sep=320;
-  let i=0;
+  const nx=5, ny=4, nz=10;
+  const sep=320;
+  let i=0;
 
-  for(let x=0;x<nx;x++){
-    for(let y=0;y<ny;y++){
-      for(let z=0;z<nz;z++){
-        if(i>=items.length) return;
-        transform(
-          items[i].el,
-          x*sep - (nx-1)*sep/2,
-          y*sep - (ny-1)*sep/2,
-          z*sep - (nz-1)*sep/2
-        );
-        i++;
-      }
-    }
-  }
+  for(let x=0;x<nx;x++){
+    for(let y=0;y<ny;y++){
+      for(let z=0;z<nz;z++){
+        if(i>=items.length) return;
+        transform(
+          items[i].el,
+          x*sep - (nx-1)*sep/2,
+          y*sep - (ny-1)*sep/2,
+          z*sep - (nz-1)*sep/2
+        );
+        i++;
+      }
+    }
+  }
 }
 
-/* ✅ NEW — 4-FACE PYRAMID (TETRAHEDRON) */
-function layoutPyramid(){
-  const top = { x:0, y:-300, z:0 };
-  const base = [
-    { x: 250, y:200, z: 250 },
-    { x:-250, y:200, z: 250 },
-    { x:   0, y:200, z:-250 }
-  ];
+function layoutTetrahedron(){
+  const N = items.length;
+  const R = 400; // Radius for the base and height of the pyramid
+  const H = R * Math.sqrt(8/9); // Height of a regular tetrahedron
+  const baseR = R * Math.sqrt(3/8); // Radius of the base circle
 
-  const perFace = Math.ceil(items.length / 3);
-  let index = 0;
+  // Vertices of a tetrahedron for position scaling (approximated for visual placement)
+  const vertices = [
+    { x: 0, y: H/2, z: 0, rx: 0, ry: 0 }, // Top vertex
+    { x: baseR * Math.cos(Math.PI/2), y: -H/2, z: baseR * Math.sin(Math.PI/2), rx: 109.5, ry: 0 }, // Base vertex 1
+    { x: baseR * Math.cos(Math.PI/2 + 2 * Math.PI / 3), y: -H/2, z: baseR * Math.sin(Math.PI/2 + 2 * Math.PI / 3), rx: 109.5, ry: 120 }, // Base vertex 2
+    { x: baseR * Math.cos(Math.PI/2 + 4 * Math.PI / 3), y: -H/2, z: baseR * Math.sin(Math.PI/2 + 4 * Math.PI / 3), rx: 109.5, ry: 240 } // Base vertex 3
+  ];
 
-  for(let f=0; f<3; f++){
-    const A = top;
-    const B = base[f];
+  for(let i=0;i<N;i++){
+    // Assign items to the four faces (approximate distribution)
+    const faceIndex = i % 4;
 
-    for(let i=0; i<perFace && index < items.length; i++, index++){
-      const t = i / perFace;
-      const x = A.x + (B.x - A.x) * t;
-      const y = A.y + (B.y - A.y) * t;
-      const z = A.z + (B.z - A.z) * t;
-      transform(items[index].el, x, y, z);
-    }
-  }
+    // Simple radial placement within a cone for a pyramid look
+    const angle = (i * 2 * Math.PI) / N;
+    const radius = R * (1 - i / N); // Tapering radius for a pyramid shape
+    const y = R * (i / N) - R/2; // Vertical position
+
+    const x = Math.cos(angle) * radius * 0.5;
+    const z = Math.sin(angle) * radius * 0.5;
+
+    // Approximate rotation towards the center/peak
+    const rx = 30;
+    const ry = angle * 180 / Math.PI;
+
+    transform(
+      items[i].el,
+      x, y, z,
+      rx, ry
+    );
+  }
 }
+
 
 function setLayout(type){
-  if(type==="table") layoutTable();
-  else if(type==="sphere") layoutSphere();
-  else if(type==="doubleHelix") layoutDoubleHelix();
-  else if(type==="grid") layoutGrid();
-  else if(type==="pyramid") layoutPyramid();   /* ✅ added */
+  if(type==="table") layoutTable();
+  else if(type==="sphere") layoutSphere();
+  else if(type==="doubleHelix") layoutDoubleHelix();
+  else if(type==="grid") layoutGrid();
+  else if(type==="tetrahedron") layoutTetrahedron();
 }
 
 
@@ -382,16 +394,16 @@ function setLayout(type){
 let down=false, lx=0, ly=0, rx=0, ry=0;
 
 container.addEventListener("pointerdown", e=>{
-  down=true; lx=e.clientX; ly=e.clientY;
+  down=true; lx=e.clientX; ly=e.clientY;
 });
 container.addEventListener("pointerup", ()=> down=false);
 
 container.addEventListener("pointermove", e=>{
-  if(!down) return;
-  const dx=e.clientX-lx, dy=e.clientY-ly;
-  ry+=dx*0.2; rx-=dy*0.2;
-  stage.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
-  lx=e.clientX; ly=e.clientY;
+  if(!down) return;
+  const dx=e.clientX-lx, dy=e.clientY-ly;
+  ry+=dx*0.2; rx-=dy*0.2;
+  stage.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+  lx=e.clientX; ly=e.clientY;
 });
 
 
@@ -399,9 +411,9 @@ container.addEventListener("pointermove", e=>{
 document.getElementById("loadBtn").onclick = loadData;
 
 document.getElementById("apply").onclick = () => {
-  const v = document.getElementById("layout").value;
-  if(!items.length){ alert("Load data first"); return; }
-  setLayout(v);
+  const v = document.getElementById("layout").value;
+  if(!items.length){ alert("Load data first"); return; }
+  setLayout(v);
 };
 </script>
 </body>
