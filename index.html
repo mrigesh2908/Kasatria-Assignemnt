@@ -342,55 +342,59 @@ function layoutGrid(){
 }
 
 // NEW FUNCTION: layoutTetrahedron (4-Face Pyramid)
-function layoutTetrahedron(){
+function layoutTetrahedron() {
   const N = items.length;
-  const R = 400; // Base Radius for the pyramid
-  const H = 500; // Pyramid Height
-  const centerY = H / 2;
+
+  // Real tetrahedron has 4 vertices in 3D space
+  const R = 500; // size scale
+  const vertices = [
+    { x: 0, y: R, z: 0 },                      // Top vertex
+    { x: -R, y: -R, z: -R },                   // Base corner 1
+    { x: R,  y: -R, z: -R },                   // Base corner 2
+    { x: 0,  y: -R, z: R }                     // Base corner 3
+  ];
+
+  // 4 triangular faces (vertex indices)
+  const faces = [
+    [0, 1, 2],
+    [0, 2, 3],
+    [0, 3, 1],
+    [1, 3, 2]
+  ];
+
   const tilesPerFace = Math.ceil(N / 4);
 
-  // The angles for the four faces in the base plane (0, 90, 180, 270 degrees)
-  const faceAngles = [0, Math.PI / 2, Math.PI, 3 * Math.PI / 2];
-  const faceRotY = [90, 180, 270, 0]; // Rotation to face outward
+  for (let i = 0; i < N; i++) {
+    const faceIndex = Math.floor(i / tilesPerFace);
+    const face = faces[faceIndex];
 
-  for(let i = 0; i < N; i++){
-    const faceIndex = Math.floor(i / tilesPerFace) % 4;
-    const tileInFaceIndex = i % tilesPerFace;
-    const faceAngle = faceAngles[faceIndex];
+    // Position inside the triangle using barycentric coordinates
+    const t = (i % tilesPerFace) / tilesPerFace;
+    const u = Math.random() * (1 - t);
+    const v = 1 - t - u;
 
-    // Normalized distance from base (0) to peak (1)
-    const t = tileInFaceIndex / tilesPerFace;
+    const A = vertices[face[0]];
+    const B = vertices[face[1]];
+    const C = vertices[face[2]];
 
-    // Vertical position, tapering up
-    const heightPosition = (1 - t) * H - centerY;
+    // Interpolate triangle surface
+    const x = A.x * t + B.x * u + C.x * v;
+    const y = A.y * t + B.y * u + C.y * v;
+    const z = A.z * t + B.z * u + C.z * v;
 
-    // Horizontal spread for the face: tiles are placed along the base and taper to the center (x/z plane)
-    // We use an offset distance from the center, which decreases towards the peak
-    const baseOffset = R / 2; 
-    const currentOffset = baseOffset * (1 - t);
+    // Make the tile perpendicular to the triangle surface
+    // Compute face normal
+    const ux = B.x - A.x, uy = B.y - A.y, uz = B.z - A.z;
+    const vx = C.x - A.x, vy = C.y - A.y, vz = C.z - A.z;
+    const nx = uy * vz - uz * vy;
+    const ny = uz * vx - ux * vz;
+    const nz = ux * vy - uy * vx;
+    const len = Math.hypot(nx, ny, nz);
 
-    // Calculate position on a virtual square base
-    let x, z;
-    if (faceIndex % 2 === 0) { // Faces along the X-axis (0 and 180 deg)
-      x = R * Math.cos(faceAngle) * (1 - t);
-      z = currentOffset * Math.sin(faceAngle + Math.PI / 2); // Spread away from the center
-    } else { // Faces along the Z-axis (90 and 270 deg)
-      x = currentOffset * Math.cos(faceAngle + Math.PI / 2); // Spread away from the center
-      z = R * Math.sin(faceAngle) * (1 - t);
-    }
+    const ry = Math.atan2(nx, nz) * 180 / Math.PI;
+    const rx = Math.asin(-ny / len) * 180 / Math.PI;
 
-    // Determine rotation: orient the tiles to face outwards from the center axis
-    const rx = -45 * (1 - t); // Tilts the tile upwards as it goes higher
-    const ry = faceRotY[faceIndex];
-
-    transform(
-      items[i].el,
-      x,
-      heightPosition,
-      z,
-      rx,
-      ry
-    );
+    transform(items[i].el, x, y, z, rx, ry);
   }
 }
 
