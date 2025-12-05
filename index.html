@@ -105,7 +105,6 @@ button,select{
   }
 }
 </style>
-</head>
 
 <body>
 <div id="ui">
@@ -136,10 +135,6 @@ button,select{
 </div>
 
 <script>
-
-// Read CSS variable for spacing calculation
-const style = getComputedStyle(document.documentElement);
-const var_tile_w = parseFloat(style.getPropertyValue('--tile-w').replace('px', ''));
 
 
 /*Google Login*/
@@ -346,55 +341,55 @@ function layoutGrid(){
   }
 }
 
-// NEW FUNCTION: layoutTetrahedron (True 4-Face Pyramid)
+// NEW FUNCTION: layoutTetrahedron (4-Face Pyramid)
 function layoutTetrahedron(){
   const N = items.length;
-  const R = 450; // Radius / Scale for the tetrahedron
+  const R = 400; // Base Radius for the pyramid
+  const H = 500; // Pyramid Height
+  const centerY = H / 2;
   const tilesPerFace = Math.ceil(N / 4);
 
-  // Rotation (rx, ry) and Translation (tz) needed to position a tile on a face 
-  // and have that face point towards the camera from the center.
-  // Note: 109.5 degrees is the dihedral angle (the angle between two faces)
-  const T = 109.5; // Tetrahedron dihedral angle
-  const faces = [
-    // Face 1: Tilted forward/down
-    { ry: 0, rx: -90 + T/2, tz: R * 0.4 }, 
-    // Face 2: Tilted up/left
-    { ry: 120, rx: -90 + T/2, tz: R * 0.4 }, 
-    // Face 3: Tilted up/right
-    { ry: -120, rx: -90 + T/2, tz: R * 0.4 },
-    // Face 4 (Base): Tilted straight down/back
-    { ry: 0, rx: 90 - T/2, tz: -R * 0.4 } 
-  ];
+  // The angles for the four faces in the base plane (0, 90, 180, 270 degrees)
+  const faceAngles = [0, Math.PI / 2, Math.PI, 3 * Math.PI / 2];
+  const faceRotY = [90, 180, 270, 0]; // Rotation to face outward
 
   for(let i = 0; i < N; i++){
     const faceIndex = Math.floor(i / tilesPerFace) % 4;
     const tileInFaceIndex = i % tilesPerFace;
-    const face = faces[faceIndex];
+    const faceAngle = faceAngles[faceIndex];
 
-    // Normalized distance from the start of the face's tile group (t=0) to the end (t=1)
-    const t = (tileInFaceIndex / tilesPerFace) * 2 - 1; // Range -1 to 1
+    // Normalized distance from base (0) to peak (1)
+    const t = tileInFaceIndex / tilesPerFace;
 
-    // Simple horizontal (x) and vertical (y) placement within the rotated face
-    const rows = Math.ceil(Math.sqrt(tilesPerFace));
-    const cols = rows;
-    const row = Math.floor(tileInFaceIndex / cols);
-    const col = tileInFaceIndex % cols;
+    // Vertical position, tapering up
+    const heightPosition = (1 - t) * H - centerY;
 
-    const sep = 1.8 * (var_tile_w / 2); // Spacing based on tile width
-    
-    // Position the tiles in a grid on their face plane
-    const x = col * sep - (cols - 1) * sep / 2;
-    const y = row * sep - (rows - 1) * sep / 2;
-    
-    // Use the stored rotation and Z-translation for the chosen face
+    // Horizontal spread for the face: tiles are placed along the base and taper to the center (x/z plane)
+    // We use an offset distance from the center, which decreases towards the peak
+    const baseOffset = R / 2; 
+    const currentOffset = baseOffset * (1 - t);
+
+    // Calculate position on a virtual square base
+    let x, z;
+    if (faceIndex % 2 === 0) { // Faces along the X-axis (0 and 180 deg)
+      x = R * Math.cos(faceAngle) * (1 - t);
+      z = currentOffset * Math.sin(faceAngle + Math.PI / 2); // Spread away from the center
+    } else { // Faces along the Z-axis (90 and 270 deg)
+      x = currentOffset * Math.cos(faceAngle + Math.PI / 2); // Spread away from the center
+      z = R * Math.sin(faceAngle) * (1 - t);
+    }
+
+    // Determine rotation: orient the tiles to face outwards from the center axis
+    const rx = -45 * (1 - t); // Tilts the tile upwards as it goes higher
+    const ry = faceRotY[faceIndex];
+
     transform(
       items[i].el,
-      x, // X position on the face plane
-      y, // Y position on the face plane
-      face.tz, // Z translation (depth) relative to the center
-      face.rx, // Rotation around X (pitch)
-      face.ry  // Rotation around Y (yaw)
+      x,
+      heightPosition,
+      z,
+      rx,
+      ry
     );
   }
 }
@@ -405,7 +400,7 @@ function setLayout(type){
   else if(type==="sphere") layoutSphere();
   else if(type==="doubleHelix") layoutDoubleHelix();
   else if(type==="grid") layoutGrid();
-  // UPDATED LOGIC HERE
+  // NEW LOGIC ADDED HERE
   else if(type==="tetrahedron") layoutTetrahedron();
 }
 
