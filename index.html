@@ -345,13 +345,13 @@ function layoutGrid(){
 function layoutTetrahedron() {
   const N = items.length;
 
-  // Define tetrahedron vertices
+  // Define tetrahedron vertices (upright)
   const R = 400;
   const vertices = [
-    { x: 0, y: R, z: 0 },        // Top
-    { x: -R, y: -R, z: -R },     // Base 1
-    { x: R,  y: -R, z: -R },     // Base 2
-    { x: 0,  y: -R, z: R }       // Base 3
+    { x: 0, y: -R, z: 0 },        // Top (negative Y)
+    { x: -R, y: R, z: -R },       // Base 1
+    { x: R,  y: R, z: -R },       // Base 2
+    { x: 0,  y: R, z: R }         // Base 3
   ];
 
   // Faces as indices of vertices (4 faces)
@@ -397,8 +397,6 @@ function layoutTetrahedron() {
     transform(items[i].el, x, y, z, rx, ry);
   }
 }
-
-
 
 function setLayout(type){
   if(type==="table") layoutTable();
