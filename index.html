@@ -344,35 +344,27 @@ function layoutGrid(){
 // NEW FUNCTION: layoutTetrahedron (4-Face Pyramid)
 function layoutTetrahedron() {
   const N = items.length;
+  const R = 400; // Pyramid width
+  const H = 500; // Pyramid height
 
-  // Define tetrahedron vertices (upright)
-  const R = 400;
-  const vertices = [
-    { x: 0, y: -R, z: 0 },        // Top (negative Y)
-    { x: -R, y: R, z: -R },       // Base 1
-    { x: R,  y: R, z: -R },       // Base 2
-    { x: 0,  y: R, z: R }         // Base 3
+  // 3 base vertices in a triangle
+  const baseVertices = [
+    { x: -R, y: 0, z: -R },
+    { x: R,  y: 0, z: -R },
+    { x: 0,  y: 0, z: R }
   ];
 
-  // Faces as indices of vertices (4 faces)
-  const faces = [
-    [0, 1, 2], // side 1
-    [0, 2, 3], // side 2
-    [0, 3, 1], // side 3
-    [1, 3, 2]  // base
-  ];
+  const topVertex = { x: 0, y: H, z: 0 }; // Peak
 
-  const tilesPerFace = Math.ceil(N / 4);
+  const tilesPerFace = Math.ceil(N / 3);
 
   for (let i = 0; i < N; i++) {
-    const faceIndex = Math.min(Math.floor(i / tilesPerFace), 3); // 0..3
-    const face = faces[faceIndex];
+    const faceIndex = Math.min(Math.floor(i / tilesPerFace), 2); // 0..2
+    const A = topVertex;
+    const B = baseVertices[faceIndex];
+    const C = baseVertices[(faceIndex + 1) % 3];
 
-    const A = vertices[face[0]];
-    const B = vertices[face[1]];
-    const C = vertices[face[2]];
-
-    // Random barycentric coordinates inside the triangle
+    // Random barycentric coordinates inside triangle
     let u = Math.random();
     let v = Math.random();
     if (u + v > 1) { u = 1 - u; v = 1 - v; }
@@ -397,6 +389,7 @@ function layoutTetrahedron() {
     transform(items[i].el, x, y, z, rx, ry);
   }
 }
+
 
 function setLayout(type){
   if(type==="table") layoutTable();
