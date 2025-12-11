@@ -416,44 +416,52 @@ function layoutGrid(){
   fitSceneToScreen();
 }
 
-function layoutTetrahedron(){
+function layoutTetrahedron() {
   const N = items.length;
-  const R = 400;
-  const H = 500;
-  const centerY = H/2;
-  const tilesPerFace = Math.ceil(N/4);
+  const R = 400; // base size
+  const H = 500; // height
+  const centerY = H / 2;
 
-  const faceAngles=[0,Math.PI/2,Math.PI,3*Math.PI/2];
-  const faceRotY=[90,180,270,0];
+  const vertices = [
+    {x: -R/2, y: -centerY, z: -R/2}, // base corner 1
+    {x: R/2,  y: -centerY, z: -R/2}, // base corner 2
+    {x: 0,    y: -centerY, z: R/2},  // base corner 3
+    {x: 0,    y: centerY,  z: 0}     // top vertex
+  ];
 
-  for(let i=0;i<N;i++){
-    const faceIndex = Math.floor(i/tilesPerFace)%4;
-    const tileIndex = i%tilesPerFace;
-    const t = tileIndex/tilesPerFace;
+  const faces = [
+    [0, 1, 3], // face 1
+    [1, 2, 3], // face 2
+    [2, 0, 3], // face 3
+    [0, 1, 2]  // base face
+  ];
 
-    const heightPos = (1-t)*H - centerY;
-    const baseOffset = R/2;
-    const currentOffset = baseOffset*(1-t);
+  const tilesPerFace = Math.ceil(N / 4);
 
-    const faceAngle = faceAngles[faceIndex];
-    let x,z;
+  let i = 0;
+  for (let f = 0; f < faces.length; f++) {
+    const [v0, v1, v2] = faces[f];
+    for (let t = 0; t < tilesPerFace; t++) {
+      if (i >= N) break;
+      const s = t / tilesPerFace;
 
-    if(faceIndex%2===0){
-      x = R*Math.cos(faceAngle)*(1-t);
-      z = currentOffset*Math.sin(faceAngle+Math.PI/2);
-    } else {
-      x = currentOffset*Math.cos(faceAngle+Math.PI/2);
-      z = R*Math.sin(faceAngle)*(1-t);
+      // Interpolate along edges for triangular grid
+      const x = vertices[v0].x * (1-s) + vertices[v1].x * s + (vertices[v2].x - vertices[v0].x) * s * 0.5;
+      const y = vertices[v0].y * (1-s) + vertices[v1].y * s + (vertices[v2].y - vertices[v0].y) * s * 0.5;
+      const z = vertices[v0].z * (1-s) + vertices[v1].z * s + (vertices[v2].z - vertices[v0].z) * s * 0.5;
+
+      // Slight rotation for better 3D effect
+      const rx = -30 + 60*s;
+      const ry = 45*s;
+
+      transform(items[i].el, x, y, z, rx, ry);
+      i++;
     }
-
-    const rx = -45*(1-t);
-    const ry = faceRotY[faceIndex];
-
-    transform(items[i].el, x, heightPos, z, rx, ry);
   }
 
   fitSceneToScreen();
 }
+
 
 /* ============================================
       LAYOUT SELECTION
