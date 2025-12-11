@@ -288,16 +288,47 @@ function transform(el,x,y,z,rx=0,ry=0){
       rotateY(${ry}deg)`;
 }
 
-function layoutTable(){
-  const cols=20, rows=10;
-  const sepX=220, sepY=260;
-  const offX=(cols-1)*sepX/2, offY=(rows-1)*sepY/2;
+function layoutTable() {
+  const cols = 20;
+  const rows = Math.ceil(items.length / cols);
 
-  items.forEach((it,i)=>{
-    const c=i%cols, r=(i/cols)|0;
-    transform(it.el, c*sepX-offX, r*sepY-offY, 0);
+  // tile size
+  const tileW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile-w'));
+  const tileH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile-h'));
+
+  // spacing multipliers
+  const spacingX = tileW * 1.4;
+  const spacingY = tileH * 1.4;
+
+  // total size of the grid
+  const totalWidth = cols * spacingX;
+  const totalHeight = rows * spacingY;
+
+  // how much to zoom so everything fits into viewport
+  const scaleX = window.innerWidth / totalWidth;
+  const scaleY = window.innerHeight / totalHeight;
+
+  // choose the smaller scale so all tiles fit
+  const scale = Math.min(scaleX, scaleY) * 0.9; // 0.9 adds a small margin
+
+  // apply scaling to stage
+  stage.style.transform = `translateZ(${-(window.innerWidth)*0.4}px) scale(${scale})`;
+
+  // center the grid
+  const offsetX = totalWidth / 2 - spacingX / 2;
+  const offsetY = totalHeight / 2 - spacingY / 2;
+
+  items.forEach((it, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+
+    const x = col * spacingX - offsetX;
+    const y = row * spacingY - offsetY;
+
+    transform(it.el, x, y, 0);
   });
 }
+
 
 function layoutSphere(){
   const N = items.length;
