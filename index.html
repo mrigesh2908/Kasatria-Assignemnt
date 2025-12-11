@@ -136,9 +136,23 @@ button,select{
 
 <script>
 
+/* AUTO-ZOOM — FULLY INTEGRATED */
+const stage = document.getElementById("stage");
+
+function autoZoom() {
+  const smallest = Math.min(window.innerWidth, window.innerHeight);
+  const z = -smallest * 1.2; // adjust multiplier for zoom level
+  stage.style.transform = `translateZ(${z}px)`;
+}
+
+// Run at start
+autoZoom();
+
+// Run on window resize
+window.addEventListener("resize", autoZoom);
+
 
 /*Google Login*/
-
 function handleCredentialResponse(response) {
   const payload = JSON.parse(atob(response.credential.split('.')[1]));
   console.log("Logged in user:", payload);
@@ -149,7 +163,6 @@ function handleCredentialResponse(response) {
 }
 
 /* CSV*/
-
 const CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vSpokab2VctDgtMFhlHgI9x6rPrE3gkBN7RsvkmsBeUYUrq8t25y4sVUyJ-XTnfC6q9qznY2mJPHOLY/pub?gid=1348231379&single=true&output=csv";
 
@@ -203,7 +216,6 @@ function colorForNet(n){
 /*Main*/
 
 let items=[];
-const stage=document.getElementById("stage");
 
 async function loadData(){
   try{
@@ -268,7 +280,6 @@ function createTiles(){
 }
 
 /*Layout*/
-
 function transform(el,x,y,z,rx=0,ry=0){
   el.style.transform =
     `translate3d(${x}px,${y}px,${z}px)
@@ -341,66 +352,49 @@ function layoutGrid(){
   }
 }
 
-// NEW FUNCTION: layoutTetrahedron (4-Face Pyramid)
+// New Tetra layout
 function layoutTetrahedron(){
   const N = items.length;
-  const R = 400; // Base Radius for the pyramid
-  const H = 500; // Pyramid Height
+  const R = 400;
+  const H = 500;
   const centerY = H / 2;
   const tilesPerFace = Math.ceil(N / 4);
 
-  // The angles for the four faces in the base plane (0, 90, 180, 270 degrees)
-  const faceAngles = [0, Math.PI / 2, Math.PI, 3 * Math.PI / 2];
-  const faceRotY = [90, 180, 270, 0]; // Rotation to face outward
+  const faceAngles = [0, Math.PI/2, Math.PI, 3*Math.PI/2];
+  const faceRotY = [90,180,270,0];
 
   for(let i = 0; i < N; i++){
     const faceIndex = Math.floor(i / tilesPerFace) % 4;
     const tileInFaceIndex = i % tilesPerFace;
-    const faceAngle = faceAngles[faceIndex];
-
-    // Normalized distance from base (0) to peak (1)
     const t = tileInFaceIndex / tilesPerFace;
 
-    // Vertical position, tapering up
-    const heightPosition = (1 - t) * H - centerY;
-
-    // Horizontal spread for the face: tiles are placed along the base and taper to the center (x/z plane)
-    // We use an offset distance from the center, which decreases towards the peak
-    const baseOffset = R / 2; 
+    const heightPos = (1 - t) * H - centerY;
+    const baseOffset = R/2;
     const currentOffset = baseOffset * (1 - t);
 
-    // Calculate position on a virtual square base
+    const faceAngle = faceAngles[faceIndex];
     let x, z;
-    if (faceIndex % 2 === 0) { // Faces along the X-axis (0 and 180 deg)
+
+    if (faceIndex % 2 === 0){
       x = R * Math.cos(faceAngle) * (1 - t);
-      z = currentOffset * Math.sin(faceAngle + Math.PI / 2); // Spread away from the center
-    } else { // Faces along the Z-axis (90 and 270 deg)
-      x = currentOffset * Math.cos(faceAngle + Math.PI / 2); // Spread away from the center
+      z = currentOffset * Math.sin(faceAngle + Math.PI/2);
+    } else {
+      x = currentOffset * Math.cos(faceAngle + Math.PI/2);
       z = R * Math.sin(faceAngle) * (1 - t);
     }
 
-    // Determine rotation: orient the tiles to face outwards from the center axis
-    const rx = -45 * (1 - t); // Tilts the tile upwards as it goes higher
+    const rx = -45 * (1 - t);
     const ry = faceRotY[faceIndex];
 
-    transform(
-      items[i].el,
-      x,
-      heightPosition,
-      z,
-      rx,
-      ry
-    );
+    transform(items[i].el, x, heightPos, z, rx, ry);
   }
 }
-
 
 function setLayout(type){
   if(type==="table") layoutTable();
   else if(type==="sphere") layoutSphere();
   else if(type==="doubleHelix") layoutDoubleHelix();
   else if(type==="grid") layoutGrid();
-  // NEW LOGIC ADDED HERE
   else if(type==="tetrahedron") layoutTetrahedron();
 }
 
@@ -417,12 +411,12 @@ container.addEventListener("pointermove", e=>{
   if(!down) return;
   const dx=e.clientX-lx, dy=e.clientY-ly;
   ry+=dx*0.2; rx-=dy*0.2;
-  stage.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+  stage.style.transform += ` rotateX(${rx}deg) rotateY(${ry}deg)`;
   lx=e.clientX; ly=e.clientY;
 });
 
 
-/*Button*/
+/*Buttons*/
 document.getElementById("loadBtn").onclick = loadData;
 
 document.getElementById("apply").onclick = () => {
@@ -430,7 +424,7 @@ document.getElementById("apply").onclick = () => {
   if(!items.length){ alert("Load data first"); return; }
   setLayout(v);
 };
+
 </script>
 </body>
 </html>
-
