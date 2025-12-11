@@ -418,15 +418,14 @@ function layoutGrid(){
 
 function layoutTetrahedron() {
   const N = items.length;
-  const R = 400; // base size
-  const H = 500; // height
-  const centerY = H / 2;
+  const H = 500; // pyramid height
+  const R = 400; // base radius
 
   const vertices = [
-    {x: -R/2, y: -centerY, z: -R/2}, // base corner 1
-    {x: R/2,  y: -centerY, z: -R/2}, // base corner 2
-    {x: 0,    y: -centerY, z: R/2},  // base corner 3
-    {x: 0,    y: centerY,  z: 0}     // top vertex
+    {x: -R/2, y: -H/2, z: -R/2}, // base corner 1
+    {x: R/2, y: -H/2, z: -R/2},  // base corner 2
+    {x: 0, y: -H/2, z: R/2},     // base corner 3
+    {x: 0, y: H/2, z: 0}         // top vertex
   ];
 
   const faces = [
@@ -441,27 +440,29 @@ function layoutTetrahedron() {
   let i = 0;
   for (let f = 0; f < faces.length; f++) {
     const [v0, v1, v2] = faces[f];
-    for (let t = 0; t < tilesPerFace; t++) {
-      if (i >= N) break;
-      const s = t / tilesPerFace;
 
-      // Interpolate along edges for triangular grid
-      const x = vertices[v0].x * (1-s) + vertices[v1].x * s + (vertices[v2].x - vertices[v0].x) * s * 0.5;
-      const y = vertices[v0].y * (1-s) + vertices[v1].y * s + (vertices[v2].y - vertices[v0].y) * s * 0.5;
-      const z = vertices[v0].z * (1-s) + vertices[v1].z * s + (vertices[v2].z - vertices[v0].z) * s * 0.5;
+    const steps = Math.ceil(Math.sqrt(tilesPerFace));
+    for (let row = 0; row < steps; row++) {
+      for (let col = 0; col <= row; col++) {
+        if (i >= N) break;
 
-      // Slight rotation for better 3D effect
-      const rx = -30 + 60*s;
-      const ry = 45*s;
+        // Barycentric coordinates to place tiles on triangle
+        const a = 1 - row / steps;
+        const b = (row - col) / steps;
+        const c = col / steps;
 
-      transform(items[i].el, x, y, z, rx, ry);
-      i++;
+        const x = a*vertices[v0].x + b*vertices[v1].x + c*vertices[v2].x;
+        const y = a*vertices[v0].y + b*vertices[v1].y + c*vertices[v2].y;
+        const z = a*vertices[v0].z + b*vertices[v1].z + c*vertices[v2].z;
+
+        transform(items[i].el, x, y, z, 0, 0);
+        i++;
+      }
     }
   }
 
   fitSceneToScreen();
 }
-
 
 /* ============================================
       LAYOUT SELECTION
