@@ -109,6 +109,7 @@ button,select{
 <body>
 <div id="ui">
 
+  <!-- YOU MUST REPLACE "YOUR_GOOGLE_CLIENT_ID" AFTER PASTING -->
   <div id="g_id_onload"
     data-client_id="699948358244-7q1jjb5i36toidhhivnngpb77so71t1j.apps.googleusercontent.com"
     data-context="signin"
@@ -137,18 +138,45 @@ button,select{
 
 <script>
 /* ============================================
+      GOOGLE LOGIN FIX
+============================================ */
+window.handleCredentialResponse = function(response) {
+  const payload = JSON.parse(atob(response.credential.split('.')[1]));
+  alert(`Hello ${payload.name}!`);
+  document.getElementById("loadBtn").disabled = false;
+};
+
+// Initialize Google Sign-In
+window.onload = () => {
+  google.accounts.id.initialize({
+    client_id: "699948358244-7q1jjb5i36toidhhivnngpb77so71t1j.apps.googleusercontent.com",
+    callback: handleCredentialResponse
+  });
+
+  google.accounts.id.renderButton(
+    document.querySelector(".g_id_signin"),
+    { theme: "outline", size: "medium" }
+  );
+
+  google.accounts.id.prompt(); // optional, auto prompt sign-in
+};
+
+/* ============================================
       GLOBALS
 ============================================ */
 const stage = document.getElementById("stage");
-const container = document.getElementById("container"); // FIXED: define container
 let items = [];
-let rotX = 0, rotY = 0;
+
+let rotX = 0;
+let rotY = 0;
 
 /* ============================================
       UNIVERSAL AUTO-FIT SYSTEM
 ============================================ */
 function fitSceneToScreen() {
+
   const tiles = [...document.querySelectorAll(".tile")];
+
   if (!tiles.length) return;
 
   let minX = Infinity, maxX = -Infinity;
@@ -164,8 +192,10 @@ function fitSceneToScreen() {
 
   const width = maxX - minX + 300;
   const height = maxY - minY + 300;
+
   const scaleX = window.innerWidth / width;
   const scaleY = window.innerHeight / height;
+
   const scale = Math.min(scaleX, scaleY);
 
   stage.dataset.baseScale = scale;
@@ -173,7 +203,7 @@ function fitSceneToScreen() {
 }
 
 /* ============================================
-      APPLY FINAL STAGE TRANSFORM
+      APPLY FINAL STAGE TRANSFORM (ROT + SCALE)
 ============================================ */
 function applyStageTransform() {
   const scale = Number(stage.dataset.baseScale || 1);
@@ -182,23 +212,16 @@ function applyStageTransform() {
 }
 
 /* ============================================
-      GOOGLE LOGIN
+      CSV PARSER (unchanged)
 ============================================ */
-function handleCredentialResponse(response) {
-  const payload = JSON.parse(atob(response.credential.split('.')[1]));
-  alert(`Hello ${payload.name}!`);
-  document.getElementById("loadBtn").disabled = false;
-}
-
-/* ============================================
-      CSV PARSER
-============================================ */
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSpokab2VctDgtMFhlHgI9x6rPrE3gkBN7RsvkmsBeUYUrq8t25y4sVUyJ-XTnfC6q9qznY2mJPHOLY/pub?gid=1348231379&single=true&output=csv";
+const CSV_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSpokab2VctDgtMFhlHgI9x6rPrE3gkBN7RsvkmsBeUYUrq8t25y4sVUyJ-XTnfC6q9qznY2mJPHOLY/pub?gid=1348231379&single=true&output=csv";
 
 function parseCSV(text){
   const rows = [];
   let cur = "", inQuote = false;
   const lines = [];
+
   for(const ch of text){
     if(ch === '"'){ inQuote = !inQuote; cur+=ch; continue; }
     if(ch === "\n" && !inQuote){ lines.push(cur); cur=""; continue; }
@@ -263,7 +286,6 @@ async function loadData(){
     alert("Loaded "+items.length+" rows");
   }catch(err){
     alert("Error loading CSV");
-    console.error(err);
   }
 }
 
@@ -316,16 +338,21 @@ function transform(el,x,y,z,rx=0,ry=0){
 function layoutTable() {
   const cols = 20;
   const rows = Math.ceil(items.length / cols);
+
   const tileW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile-w'));
   const tileH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile-h'));
-  const spacingX = tileW*1.4, spacingY = tileH*1.4;
+  const spacingX = tileW * 1.4;
+  const spacingY = tileH * 1.4;
+
   const offsetX = ((cols-1)*spacingX)/2;
   const offsetY = ((rows-1)*spacingY)/2;
 
   items.forEach((it,i)=>{
-    const col = i%cols;
-    const row = Math.floor(i/cols);
-    transform(it.el, col*spacingX - offsetX, row*spacingY - offsetY, 0);
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const x = col*spacingX - offsetX;
+    const y = row*spacingY - offsetY;
+    transform(it.el, x, y, 0);
   });
 
   fitSceneToScreen();
@@ -334,65 +361,97 @@ function layoutTable() {
 function layoutSphere(){
   const N = items.length;
   const R = Math.min(innerWidth,innerHeight)*0.45;
+
   for(let i=0;i<N;i++){
     const phi = Math.acos(-1 + (2*i)/N);
     const theta = Math.sqrt(N*Math.PI)*phi;
-    transform(items[i].el, R*Math.cos(theta)*Math.sin(phi), R*Math.sin(theta)*Math.sin(phi), R*Math.cos(phi));
+    transform(
+      items[i].el,
+      R*Math.cos(theta)*Math.sin(phi),
+      R*Math.sin(theta)*Math.sin(phi),
+      R*Math.cos(phi)
+    );
   }
+
   fitSceneToScreen();
 }
 
 function layoutDoubleHelix(){
-  const R=280, spacing=50, angleStep=0.3;
+  const R = 280;
+  const spacing = 50;
+  const angleStep = 0.3;
+
   items.forEach((it,i)=>{
-    const strand=i%2, a=i*angleStep, offsetAngle=strand===0?0:Math.PI;
-    const x=Math.cos(a+offsetAngle)*R;
-    const z=Math.sin(a+offsetAngle)*R;
-    const y=i*spacing/2 - items.length*spacing/4;
-    transform(it.el,x,y,z,0,(a+offsetAngle)*40);
+    const strand = i % 2;
+    const a = i * angleStep;
+    const offsetAngle = strand===0 ? 0 : Math.PI;
+    const x = Math.cos(a+offsetAngle)*R;
+    const z = Math.sin(a+offsetAngle)*R;
+    const y = i*spacing/2 - items.length*spacing/4;
+    transform(it.el, x, y, z, 0, (a+offsetAngle)*40);
   });
+
   fitSceneToScreen();
 }
 
 function layoutGrid(){
-  const nx=5, ny=4, nz=10, sep=320;
+  const nx=5, ny=4, nz=10;
+  const sep=320;
   let i=0;
+
   for(let x=0;x<nx;x++){
     for(let y=0;y<ny;y++){
       for(let z=0;z<nz;z++){
         if(i>=items.length) break;
-        transform(items[i].el, x*sep-(nx-1)*sep/2, y*sep-(ny-1)*sep/2, z*sep-(nz-1)*sep/2);
+        transform(items[i].el,
+          x*sep-(nx-1)*sep/2,
+          y*sep-(ny-1)*sep/2,
+          z*sep-(nz-1)*sep/2
+        );
         i++;
       }
     }
   }
+
   fitSceneToScreen();
 }
 
 function layoutTetrahedron(){
-  const N=items.length, R=400, H=500, centerY=H/2, tilesPerFace=Math.ceil(N/4);
+  const N = items.length;
+  const R = 400;
+  const H = 500;
+  const centerY = H/2;
+  const tilesPerFace = Math.ceil(N/4);
+
   const faceAngles=[0,Math.PI/2,Math.PI,3*Math.PI/2];
   const faceRotY=[90,180,270,0];
 
   for(let i=0;i<N;i++){
-    const faceIndex=Math.floor(i/tilesPerFace)%4;
-    const tileIndex=i%tilesPerFace;
-    const t=tileIndex/tilesPerFace;
-    const heightPos=(1-t)*H-centerY;
-    const baseOffset=R/2;
-    const currentOffset=baseOffset*(1-t);
-    const faceAngle=faceAngles[faceIndex];
+    const faceIndex = Math.floor(i/tilesPerFace)%4;
+    const tileIndex = i%tilesPerFace;
+    const t = tileIndex/tilesPerFace;
+
+    const heightPos = (1-t)*H - centerY;
+    const baseOffset = R/2;
+    const currentOffset = baseOffset*(1-t);
+
+    const faceAngle = faceAngles[faceIndex];
     let x,z;
+
     if(faceIndex%2===0){
-      x=R*Math.cos(faceAngle)*(1-t);
-      z=currentOffset*Math.sin(faceAngle+Math.PI/2);
-    } else{
-      x=currentOffset*Math.cos(faceAngle+Math.PI/2);
-      z=R*Math.sin(faceAngle)*(1-t);
+      x = R*Math.cos(faceAngle)*(1-t);
+      z = currentOffset*Math.sin(faceAngle+Math.PI/2);
+    } else {
+      x = currentOffset*Math.cos(faceAngle+Math.PI/2);
+      z = R*Math.sin(faceAngle)*(1-t);
     }
-    const rx=-45*(1-t), ry=faceRotY[faceIndex];
-    transform(items[i].el,x,heightPos,z,rx,ry);
+
+    const rx = -45*(1-t);
+    const ry = faceRotY[faceIndex];
+
+    transform(items[i].el, x, heightPos, z, rx, ry);
   }
+
   fitSceneToScreen();
 }
 
@@ -410,30 +469,33 @@ function setLayout(type){
 /* ============================================
       ROTATE WITH MOUSE
 ============================================ */
-let isDown=false, lx=0, ly=0;
-
 container.addEventListener("pointerdown", e=>{
-  isDown=true;
-  lx=e.clientX;
-  ly=e.clientY;
+  window.isDown = true;
+  window.lx = e.clientX;
+  window.ly = e.clientY;
 });
-container.addEventListener("pointerup", ()=> isDown=false);
+container.addEventListener("pointerup", ()=> window.isDown=false);
+
 container.addEventListener("pointermove", e=>{
-  if(!isDown) return;
-  const dx=e.clientX-lx, dy=e.clientY-ly;
-  rotY+=dx*0.2;
-  rotX-=dy*0.2;
+  if(!window.isDown) return;
+  const dx = e.clientX - window.lx;
+  const dy = e.clientY - window.ly;
+
+  rotY += dx*0.2;
+  rotX -= dy*0.2;
+
   applyStageTransform();
-  lx=e.clientX;
-  ly=e.clientY;
+
+  window.lx = e.clientX;
+  window.ly = e.clientY;
 });
 
 /* ============================================
       BUTTONS
 ============================================ */
 document.getElementById("loadBtn").onclick = loadData;
-document.getElementById("apply").onclick = ()=>{
-  const v=document.getElementById("layout").value;
+document.getElementById("apply").onclick = () => {
+  const v = document.getElementById("layout").value;
   if(!items.length){ alert("Load data first"); return; }
   setLayout(v);
 };
