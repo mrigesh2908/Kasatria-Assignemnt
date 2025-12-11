@@ -108,8 +108,10 @@ button,select{
 
 <body>
 <div id="ui">
+
+  <!-- YOU MUST REPLACE "YOUR_GOOGLE_CLIENT_ID" AFTER PASTING -->
   <div id="g_id_onload"
-    data-client_id="699948358244-7q1jjb5i36toidhhivnngpb77so71t1j.apps.googleusercontent.com"
+    data-client_id="YOUR_GOOGLE_CLIENT_ID"
     data-context="signin"
     data-ux_mode="popup"
     data-callback="handleCredentialResponse">
@@ -135,34 +137,68 @@ button,select{
 </div>
 
 <script>
-
-/* AUTO-ZOOM — FULLY INTEGRATED */
+/* ============================================
+      GLOBALS
+============================================ */
 const stage = document.getElementById("stage");
+let items = [];
 
-function autoZoom() {
-  const smallest = Math.min(window.innerWidth, window.innerHeight);
-  const z = -smallest * 1.2; // adjust multiplier for zoom level
-  stage.style.transform = `translateZ(${z}px)`;
+let rotX = 0;
+let rotY = 0;
+
+/* ============================================
+      UNIVERSAL AUTO-FIT SYSTEM
+============================================ */
+function fitSceneToScreen() {
+
+  const tiles = [...document.querySelectorAll(".tile")];
+
+  if (!tiles.length) return;
+
+  let minX = Infinity, maxX = -Infinity;
+  let minY = Infinity, maxY = -Infinity;
+
+  tiles.forEach(tile => {
+    const m = new DOMMatrixReadOnly(getComputedStyle(tile).transform);
+    minX = Math.min(minX, m.m41);
+    maxX = Math.max(maxX, m.m41);
+    minY = Math.min(minY, m.m42);
+    maxY = Math.max(maxY, m.m42);
+  });
+
+  const width = maxX - minX + 300;
+  const height = maxY - minY + 300;
+
+  const scaleX = window.innerWidth / width;
+  const scaleY = window.innerHeight / height;
+
+  const scale = Math.min(scaleX, scaleY);
+
+  stage.dataset.baseScale = scale;
+  applyStageTransform();
 }
 
-// Run at start
-autoZoom();
+/* ============================================
+      APPLY FINAL STAGE TRANSFORM (ROT + SCALE)
+============================================ */
+function applyStageTransform() {
+  const scale = Number(stage.dataset.baseScale || 1);
+  stage.style.transform =
+    `scale(${scale}) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+}
 
-// Run on window resize
-window.addEventListener("resize", autoZoom);
-
-
-/*Google Login*/
+/* ============================================
+      GOOGLE LOGIN
+============================================ */
 function handleCredentialResponse(response) {
   const payload = JSON.parse(atob(response.credential.split('.')[1]));
-  console.log("Logged in user:", payload);
-
-  alert(`Hello ${payload.name}! You are now logged in.`);
-
+  alert(`Hello ${payload.name}!`);
   document.getElementById("loadBtn").disabled = false;
 }
 
-/* CSV*/
+/* ============================================
+      CSV PARSER (unchanged)
+============================================ */
 const CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vSpokab2VctDgtMFhlHgI9x6rPrE3gkBN7RsvkmsBeUYUrq8t25y4sVUyJ-XTnfC6q9qznY2mJPHOLY/pub?gid=1348231379&single=true&output=csv";
 
@@ -179,7 +215,7 @@ function parseCSV(text){
   if(cur) lines.push(cur);
 
   for(const line of lines){
-    const out=[], f="", fields=[]; let buf="", q=false;
+    const fields=[]; let buf="", q=false;
     for(let i=0;i<line.length;i++){
       const c=line[i];
       if(c=='"' && line[i+1]=='"'){ buf+='"'; i++; continue; }
@@ -213,10 +249,9 @@ function colorForNet(n){
   return "#66cc66";
 }
 
-/*Main*/
-
-let items=[];
-
+/* ============================================
+      LOAD + BUILD TILES
+============================================ */
 async function loadData(){
   try{
     const res = await fetch(CSV_URL);
@@ -236,18 +271,17 @@ async function loadData(){
     alert("Loaded "+items.length+" rows");
   }catch(err){
     alert("Error loading CSV");
-    console.error(err);
   }
 }
 
 function createTiles(){
-  stage.innerHTML="";
+  stage.innerHTML = "";
   items.forEach((it,i)=>{
     const el = document.createElement("div");
     el.className="tile";
 
     const img = document.createElement("img");
-    img.src = it.Photo || "";
+    img.src = it.Photo;
     img.onerror = ()=> img.src="https://via.placeholder.com/320x180?text=No+Image";
 
     const nm = document.createElement("div");
@@ -263,72 +297,51 @@ function createTiles(){
     el.appendChild(nm);
     el.appendChild(meta);
 
-    const net = parseNetWorth(it.NetWorthRaw);
-    el.style.background = colorForNet(net);
-
-    el.style.transform =
-      `translate3d(${(Math.random()-0.5)*1200}px,
-            ${(Math.random()-0.5)*900}px,
-            ${(Math.random()-0.5)*1800}px)
-        translate(-50%,-50%)`;
+    el.style.background = colorForNet(parseNetWorth(it.NetWorthRaw));
 
     stage.appendChild(el);
     items[i].el = el;
 
-    setTimeout(()=> el.style.opacity=1, 20 + (i%20)*15);
+    setTimeout(()=> el.style.opacity=1, 60 + (i%20)*15);
   });
 }
 
-/*Layout*/
+/* ============================================
+      TRANSFORM HELPER
+============================================ */
 function transform(el,x,y,z,rx=0,ry=0){
   el.style.transform =
     `translate3d(${x}px,${y}px,${z}px)
-      translate(-50%,-50%)
-      rotateX(${rx}deg)
-      rotateY(${ry}deg)`;
+     translate(-50%,-50%)
+     rotateX(${rx}deg)
+     rotateY(${ry}deg)`;
 }
 
+/* ============================================
+      LAYOUT FUNCTIONS
+============================================ */
 function layoutTable() {
   const cols = 20;
   const rows = Math.ceil(items.length / cols);
 
-  // tile size
   const tileW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile-w'));
   const tileH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile-h'));
-
-  // spacing multipliers
   const spacingX = tileW * 1.4;
   const spacingY = tileH * 1.4;
 
-  // total size of the grid
-  const totalWidth = cols * spacingX;
-  const totalHeight = rows * spacingY;
+  const offsetX = ((cols-1)*spacingX)/2;
+  const offsetY = ((rows-1)*spacingY)/2;
 
-  // how much to zoom so everything fits into viewport
-  const scaleX = window.innerWidth / totalWidth;
-  const scaleY = window.innerHeight / totalHeight;
-
-  // choose the smaller scale so all tiles fit
-  const scale = Math.min(scaleX, scaleY) * 0.9; // 0.9 adds a small margin
-
-  // apply scaling to stage
-  stage.style.transform = `translateZ(${-(window.innerWidth)*0.4}px) scale(${scale})`;
-
-  // center the grid
-  const offsetX = totalWidth / 2 - spacingX / 2;
-  const offsetY = totalHeight / 2 - spacingY / 2;
-
-  items.forEach((it, i) => {
+  items.forEach((it,i)=>{
     const col = i % cols;
     const row = Math.floor(i / cols);
-
-    const x = col * spacingX - offsetX;
-    const y = row * spacingY - offsetY;
-
+    const x = col*spacingX - offsetX;
+    const y = row*spacingY - offsetY;
     transform(it.el, x, y, 0);
   });
-}
 
+  fitSceneToScreen();
+}
 
 function layoutSphere(){
   const N = items.length;
@@ -344,6 +357,8 @@ function layoutSphere(){
       R*Math.cos(phi)
     );
   }
+
+  fitSceneToScreen();
 }
 
 function layoutDoubleHelix(){
@@ -354,12 +369,14 @@ function layoutDoubleHelix(){
   items.forEach((it,i)=>{
     const strand = i % 2;
     const a = i * angleStep;
-    const offsetAngle = strand === 0 ? 0 : Math.PI;
-    const x = Math.cos(a + offsetAngle) * R;
-    const z = Math.sin(a + offsetAngle) * R;
-    const y = i * spacing / 2 - items.length * spacing / 4;
-    transform(it.el, x, y, z, 0, (a + offsetAngle)*40);
+    const offsetAngle = strand===0 ? 0 : Math.PI;
+    const x = Math.cos(a+offsetAngle)*R;
+    const z = Math.sin(a+offsetAngle)*R;
+    const y = i*spacing/2 - items.length*spacing/4;
+    transform(it.el, x, y, z, 0, (a+offsetAngle)*40);
   });
+
+  fitSceneToScreen();
 }
 
 function layoutGrid(){
@@ -370,57 +387,62 @@ function layoutGrid(){
   for(let x=0;x<nx;x++){
     for(let y=0;y<ny;y++){
       for(let z=0;z<nz;z++){
-        if(i>=items.length) return;
-        transform(
-          items[i].el,
-          x*sep - (nx-1)*sep/2,
-          y*sep - (ny-1)*sep/2,
-          z*sep - (nz-1)*sep/2
+        if(i>=items.length) break;
+        transform(items[i].el,
+          x*sep-(nx-1)*sep/2,
+          y*sep-(ny-1)*sep/2,
+          z*sep-(nz-1)*sep/2
         );
         i++;
       }
     }
   }
+
+  fitSceneToScreen();
 }
 
-// New Tetra layout
 function layoutTetrahedron(){
   const N = items.length;
   const R = 400;
   const H = 500;
-  const centerY = H / 2;
-  const tilesPerFace = Math.ceil(N / 4);
+  const centerY = H/2;
+  const tilesPerFace = Math.ceil(N/4);
 
-  const faceAngles = [0, Math.PI/2, Math.PI, 3*Math.PI/2];
-  const faceRotY = [90,180,270,0];
+  const faceAngles=[0,Math.PI/2,Math.PI,3*Math.PI/2];
+  const faceRotY=[90,180,270,0];
 
-  for(let i = 0; i < N; i++){
-    const faceIndex = Math.floor(i / tilesPerFace) % 4;
-    const tileInFaceIndex = i % tilesPerFace;
-    const t = tileInFaceIndex / tilesPerFace;
+  for(let i=0;i<N;i++){
+    const faceIndex = Math.floor(i/tilesPerFace)%4;
+    const tileIndex = i%tilesPerFace;
+    const t = tileIndex/tilesPerFace;
 
-    const heightPos = (1 - t) * H - centerY;
+    const heightPos = (1-t)*H - centerY;
     const baseOffset = R/2;
-    const currentOffset = baseOffset * (1 - t);
+    const currentOffset = baseOffset*(1-t);
 
     const faceAngle = faceAngles[faceIndex];
-    let x, z;
+    let x,z;
 
-    if (faceIndex % 2 === 0){
-      x = R * Math.cos(faceAngle) * (1 - t);
-      z = currentOffset * Math.sin(faceAngle + Math.PI/2);
+    if(faceIndex%2===0){
+      x = R*Math.cos(faceAngle)*(1-t);
+      z = currentOffset*Math.sin(faceAngle+Math.PI/2);
     } else {
-      x = currentOffset * Math.cos(faceAngle + Math.PI/2);
-      z = R * Math.sin(faceAngle) * (1 - t);
+      x = currentOffset*Math.cos(faceAngle+Math.PI/2);
+      z = R*Math.sin(faceAngle)*(1-t);
     }
 
-    const rx = -45 * (1 - t);
+    const rx = -45*(1-t);
     const ry = faceRotY[faceIndex];
 
     transform(items[i].el, x, heightPos, z, rx, ry);
   }
+
+  fitSceneToScreen();
 }
 
+/* ============================================
+      LAYOUT SELECTION
+============================================ */
 function setLayout(type){
   if(type==="table") layoutTable();
   else if(type==="sphere") layoutSphere();
@@ -429,27 +451,34 @@ function setLayout(type){
   else if(type==="tetrahedron") layoutTetrahedron();
 }
 
-
-/*Control*/
-let down=false, lx=0, ly=0, rx=0, ry=0;
-
+/* ============================================
+      ROTATE WITH MOUSE
+============================================ */
 container.addEventListener("pointerdown", e=>{
-  down=true; lx=e.clientX; ly=e.clientY;
+  window.isDown = true;
+  window.lx = e.clientX;
+  window.ly = e.clientY;
 });
-container.addEventListener("pointerup", ()=> down=false);
+container.addEventListener("pointerup", ()=> window.isDown=false);
 
 container.addEventListener("pointermove", e=>{
-  if(!down) return;
-  const dx=e.clientX-lx, dy=e.clientY-ly;
-  ry+=dx*0.2; rx-=dy*0.2;
-  stage.style.transform += ` rotateX(${rx}deg) rotateY(${ry}deg)`;
-  lx=e.clientX; ly=e.clientY;
+  if(!window.isDown) return;
+  const dx = e.clientX - window.lx;
+  const dy = e.clientY - window.ly;
+
+  rotY += dx*0.2;
+  rotX -= dy*0.2;
+
+  applyStageTransform();
+
+  window.lx = e.clientX;
+  window.ly = e.clientY;
 });
 
-
-/*Buttons*/
+/* ============================================
+      BUTTONS
+============================================ */
 document.getElementById("loadBtn").onclick = loadData;
-
 document.getElementById("apply").onclick = () => {
   const v = document.getElementById("layout").value;
   if(!items.length){ alert("Load data first"); return; }
