@@ -418,42 +418,40 @@ function layoutGrid(){
 
 function layoutTetrahedron() {
   const N = items.length;
-  const H = 500; // pyramid height
-  const R = 400; // base radius
+  const H = 400; // height
+  const R = 300; // base radius
 
-  const vertices = [
-    {x: -R/2, y: -H/2, z: -R/2}, // base corner 1
-    {x: R/2, y: -H/2, z: -R/2},  // base corner 2
-    {x: 0, y: -H/2, z: R/2},     // base corner 3
-    {x: 0, y: H/2, z: 0}         // top vertex
-  ];
+  // 4 vertices
+  const vTop = {x:0, y:H/2, z:0};
+  const v0 = {x:-R/2, y:-H/2, z:-R/2};
+  const v1 = {x:R/2,  y:-H/2, z:-R/2};
+  const v2 = {x:0,    y:-H/2, z:R/2};
 
   const faces = [
-    [0, 1, 3], // face 1
-    [1, 2, 3], // face 2
-    [2, 0, 3], // face 3
-    [0, 1, 2]  // base face
+    [vTop, v0, v1],
+    [vTop, v1, v2],
+    [vTop, v2, v0],
+    [v0, v1, v2] // base
   ];
 
+  let i = 0;
   const tilesPerFace = Math.ceil(N / 4);
 
-  let i = 0;
   for (let f = 0; f < faces.length; f++) {
-    const [v0, v1, v2] = faces[f];
+    const [A,B,C] = faces[f];
 
     const steps = Math.ceil(Math.sqrt(tilesPerFace));
     for (let row = 0; row < steps; row++) {
       for (let col = 0; col <= row; col++) {
         if (i >= N) break;
 
-        // Barycentric coordinates to place tiles on triangle
-        const a = 1 - row / steps;
-        const b = (row - col) / steps;
-        const c = col / steps;
+        const a = 1 - row/steps;
+        const b = (row - col)/steps;
+        const c = col/steps;
 
-        const x = a*vertices[v0].x + b*vertices[v1].x + c*vertices[v2].x;
-        const y = a*vertices[v0].y + b*vertices[v1].y + c*vertices[v2].y;
-        const z = a*vertices[v0].z + b*vertices[v1].z + c*vertices[v2].z;
+        const x = a*A.x + b*B.x + c*C.x;
+        const y = a*A.y + b*B.y + c*C.y;
+        const z = a*A.z + b*B.z + c*C.z;
 
         transform(items[i].el, x, y, z, 0, 0);
         i++;
@@ -463,6 +461,7 @@ function layoutTetrahedron() {
 
   fitSceneToScreen();
 }
+
 
 /* ============================================
       LAYOUT SELECTION
