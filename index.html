@@ -422,10 +422,11 @@ function layoutTetrahedron() {
   const R = 300; // base radius
 
   // 4 vertices
-  const vTop = {x:0, y:H/2, z:0};
-  const v0 = {x:-R/2, y:-H/2, z:-R/2};
-  const v1 = {x:R/2,  y:-H/2, z:-R/2};
-  const v2 = {x:0,    y:-H/2, z:R/2};
+  const vTop = {x:0, y:-H/2, z:0}; // tip at bottom
+const v0 = {x:-R/2, y:H/2, z:-R/2};
+const v1 = {x:R/2,  y:H/2, z:-R/2};
+const v2 = {x:0,    y:H/2, z:R/2};
+
 
   const faces = [
     [vTop, v0, v1],
