@@ -109,7 +109,7 @@ button,select{
 <body>
 <div id="ui">
 
-  <!-- YOU MUST REPLACE "YOUR_GOOGLE_CLIENT_ID" AFTER PASTING -->
+  
   <div id="g_id_onload"
     data-client_id="699948358244-7q1jjb5i36toidhhivnngpb77so71t1j.apps.googleusercontent.com"
     data-context="signin"
@@ -137,9 +137,7 @@ button,select{
 </div>
 
 <script>
-/* ============================================
-      GOOGLE LOGIN FIX
-============================================ */
+
 window.handleCredentialResponse = function(response) {
   const payload = JSON.parse(atob(response.credential.split('.')[1]));
   alert(`Hello ${payload.name}!`);
@@ -158,21 +156,15 @@ window.onload = () => {
     { theme: "outline", size: "medium" }
   );
 
-  google.accounts.id.prompt(); // optional, auto prompt sign-in
+  google.accounts.id.prompt(); 
 };
 
-/* ============================================
-      GLOBALS
-============================================ */
 const stage = document.getElementById("stage");
 let items = [];
 
 let rotX = 0;
 let rotY = 0;
 
-/* ============================================
-      UNIVERSAL AUTO-FIT SYSTEM
-============================================ */
 function fitSceneToScreen() {
 
   const tiles = [...document.querySelectorAll(".tile")];
@@ -202,18 +194,12 @@ function fitSceneToScreen() {
   applyStageTransform();
 }
 
-/* ============================================
-      APPLY FINAL STAGE TRANSFORM (ROT + SCALE)
-============================================ */
 function applyStageTransform() {
   const scale = Number(stage.dataset.baseScale || 1);
   stage.style.transform =
     `scale(${scale}) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
 }
 
-/* ============================================
-      CSV PARSER (unchanged)
-============================================ */
 const CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vSpokab2VctDgtMFhlHgI9x6rPrE3gkBN7RsvkmsBeUYUrq8t25y4sVUyJ-XTnfC6q9qznY2mJPHOLY/pub?gid=1348231379&single=true&output=csv";
 
@@ -264,9 +250,6 @@ function colorForNet(n){
   return "#66cc66";
 }
 
-/* ============================================
-      LOAD + BUILD TILES
-============================================ */
 async function loadData(){
   try{
     const res = await fetch(CSV_URL);
@@ -321,9 +304,6 @@ function createTiles(){
   });
 }
 
-/* ============================================
-      TRANSFORM HELPER
-============================================ */
 function transform(el,x,y,z,rx=0,ry=0){
   el.style.transform =
     `translate3d(${x}px,${y}px,${z}px)
@@ -332,9 +312,6 @@ function transform(el,x,y,z,rx=0,ry=0){
      rotateY(${ry}deg)`;
 }
 
-/* ============================================
-      LAYOUT FUNCTIONS
-============================================ */
 function layoutTable() {
   const cols = 20;
   const rows = Math.ceil(items.length / cols);
@@ -431,18 +408,16 @@ function layoutTetrahedron() {
     [vTop, v0, v1],
     [vTop, v1, v2],
     [vTop, v2, v0],
-    [v0, v1, v2] // base
+    [v0, v1, v2] 
   ];
 
-  // Generate all positions for all tiles first
   const positions = [];
 
   faces.forEach(face => {
     const [A,B,C] = face;
     const faceTiles = Math.ceil(N / 4);
     for (let j = 0; j < faceTiles; j++) {
-      const t = j / (faceTiles - 1 || 1); // 0..1
-      // Interpolate along edges
+      const t = j / (faceTiles - 1 || 1); 
       const x = A.x*(1-t) + B.x*t*0.5 + C.x*t*0.5;
       const y = A.y*(1-t) + B.y*t*0.5 + C.y*t*0.5;
       const z = A.z*(1-t) + B.z*t*0.5 + C.z*t*0.5;
@@ -450,18 +425,14 @@ function layoutTetrahedron() {
     }
   });
 
-  // Assign every item a position
   items.forEach((it,i) => {
-    const pos = positions[i % positions.length]; // repeat if more tiles than positions
+    const pos = positions[i % positions.length]; 
     transform(it.el, pos.x, pos.y, pos.z, 0, 0);
   });
 
   fitSceneToScreen();
 }
 
-/* ============================================
-      LAYOUT SELECTION
-============================================ */
 function setLayout(type){
   if(type==="table") layoutTable();
   else if(type==="sphere") layoutSphere();
@@ -470,9 +441,6 @@ function setLayout(type){
   else if(type==="tetrahedron") layoutTetrahedron();
 }
 
-/* ============================================
-      ROTATE WITH MOUSE
-============================================ */
 container.addEventListener("pointerdown", e=>{
   window.isDown = true;
   window.lx = e.clientX;
@@ -494,9 +462,6 @@ container.addEventListener("pointermove", e=>{
   window.ly = e.clientY;
 });
 
-/* ============================================
-      BUTTONS
-============================================ */
 document.getElementById("loadBtn").onclick = loadData;
 document.getElementById("apply").onclick = () => {
   const v = document.getElementById("layout").value;
