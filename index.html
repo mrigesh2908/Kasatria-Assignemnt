@@ -418,10 +418,9 @@ function layoutGrid(){
 
 function layoutTetrahedron() {
   const N = items.length;
-  const H = 400; // height
-  const R = 300; // base radius
+  const H = 400;
+  const R = 300;
 
-  // 4 vertices
   const vTop = {x:0, y:H/2, z:0};
   const v0 = {x:-R/2, y:-H/2, z:-R/2};
   const v1 = {x:R/2,  y:-H/2, z:-R/2};
@@ -434,32 +433,33 @@ function layoutTetrahedron() {
     [v0, v1, v2] // base
   ];
 
-  // Generate all positions for all tiles first
   const positions = [];
+  const perFace = Math.ceil(N / 4);
 
   faces.forEach(face => {
     const [A,B,C] = face;
-    const faceTiles = Math.ceil(N / 4);
-    for (let j = 0; j < faceTiles; j++) {
-      const t = j / (faceTiles - 1 || 1); // 0..1
-      // Interpolate along edges
-      const x = A.x*(1-t) + B.x*t*0.5 + C.x*t*0.5;
-      const y = A.y*(1-t) + B.y*t*0.5 + C.y*t*0.5;
-      const z = A.z*(1-t) + B.z*t*0.5 + C.z*t*0.5;
-      positions.push({x,y,z});
+    const steps = Math.ceil(Math.sqrt(2 * perFace)); // enough steps for triangular grid
+    for(let i=0;i<steps;i++){
+      for(let j=0;j<=i;j++){
+        if(positions.length >= N) break;
+        const a = 1 - i/steps;
+        const b = (i - j)/steps;
+        const c = j/steps;
+        const x = a*A.x + b*B.x + c*C.x;
+        const y = a*A.y + b*B.y + c*C.y;
+        const z = a*A.z + b*B.z + c*C.z;
+        positions.push({x,y,z});
+      }
     }
   });
 
-  // Assign every item a position
-  items.forEach((it,i) => {
-    const pos = positions[i % positions.length]; // repeat if more tiles than positions
+  items.forEach((it,i)=>{
+    const pos = positions[i];
     transform(it.el, pos.x, pos.y, pos.z, 0, 0);
   });
 
   fitSceneToScreen();
 }
-
-
 
 /* ============================================
       LAYOUT SELECTION
