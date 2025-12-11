@@ -418,10 +418,9 @@ function layoutGrid(){
 
 function layoutTetrahedron() {
   const N = items.length;
-  const H = 500; // height
-  const R = 400; // base radius
+  const H = 400;
+  const R = 300;
 
-  // 4 vertices
   const vTop = {x:0, y:H/2, z:0};
   const v0 = {x:-R/2, y:-H/2, z:-R/2};
   const v1 = {x:R/2,  y:-H/2, z:-R/2};
@@ -439,12 +438,13 @@ function layoutTetrahedron() {
 
   for (let f = 0; f < faces.length; f++) {
     const [A,B,C] = faces[f];
+    const steps = Math.ceil((Math.sqrt(8 * tilesPerFace + 1) - 1)/2); // exact steps to cover tilesPerFace
 
-    const steps = Math.ceil(Math.sqrt(tilesPerFace));
     for (let row = 0; row < steps; row++) {
       for (let col = 0; col <= row; col++) {
         if (i >= N) break;
 
+        // Barycentric coordinates
         const a = 1 - row/steps;
         const b = (row - col)/steps;
         const c = col/steps;
